@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { forgotPassword }  from '../../api/authApi';
+import { forgotPassword } from '../../api/authApi';
 import './Auth.css';
 import { toast } from "react-toastify";
 
@@ -14,27 +14,23 @@ const ForgetPassword = () => {
   };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
+    setIsSubmitting(true);
 
-  setIsSubmitting(true);
+    try {
+      const response = await forgotPassword(form);
 
-  try {
-    const response = await forgotPassword(form);
+      toast.success(response.message || "Reset link sent successfully");
 
-    toast.success(response.data.message);
+      setSubmitted(true);
 
-    setSubmitted(true);
-
-  } catch (error) {
-    const message =
-      error.response?.data?.message ||
-      "Server error";
-
-    toast.error(message);
-  } finally {
-    setIsSubmitting(false);
-  }
-};
+    } catch (error) {
+      const message = error.response?.data?.message || error.message || "Server error";
+      toast.error(message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   if (submitted) {
     return (
@@ -64,7 +60,6 @@ const ForgetPassword = () => {
           <h1>Reset Your Password</h1>
           <p>Enter your email to receive a password reset link</p>
         </div>
-
 
         <form onSubmit={handleSubmit} className="auth-form">
           <div className="form-group">

@@ -6,7 +6,7 @@ import { toast } from "react-toastify";
 
 const ResetPassword = () => {
   const navigate = useNavigate();
-  const { token } = useParams(); // récupère le token depuis l'URL
+  const { token } = useParams();
   const [form, setForm] = useState({ password: '', confirmPassword: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -15,34 +15,34 @@ const ResetPassword = () => {
   };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  if (form.password !== form.confirmPassword) {
-    toast.error("Passwords do not match");
-    return;
-  }
+    if (form.password !== form.confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
 
-  setIsSubmitting(true);
+    setIsSubmitting(true);
 
-  try {
-    const response = await resetPassword(token, {
-      password: form.password,
-    });
+    try {
+      const response = await resetPassword(token, {
+        password: form.password,
+      });
 
-    toast.success(response.data.message);
+      toast.success(response.message || "Password reset successfully");
 
-    setTimeout(() => navigate("/login"), 2000);
+      setTimeout(() => navigate("/login"), 2000);
+    } catch (error) {
+      const message =
+        error.response?.data?.message ||
+        error.message ||
+        "Server error";
 
-  } catch (error) {
-    const message =
-      error.response?.data?.message ||
-      "Server error";
-
-    toast.error(message);
-  } finally {
-    setIsSubmitting(false);
-  }
-};
+      toast.error(message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="auth-container">
@@ -51,8 +51,6 @@ const ResetPassword = () => {
           <h1>Reset Your Password</h1>
           <p>Enter your new password below</p>
         </div>
-
-      
 
         <form onSubmit={handleSubmit} className="auth-form">
           <div className="form-group">

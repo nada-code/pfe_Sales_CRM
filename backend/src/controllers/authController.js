@@ -65,7 +65,7 @@ exports.signup = async (req, res) => {
       role: role || "salesman",
     });
 
-    const accessToken = generateAccessToken(user);
+    const token = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);
 
     user.refreshToken = refreshToken;
@@ -75,7 +75,7 @@ exports.signup = async (req, res) => {
     return res.status(201).json({
       success: true,
       message: "User created successfully",
-      accessToken,
+      token,
       refreshToken,
       user: {
         id: user._id,
@@ -110,10 +110,20 @@ exports.login = async (req, res) => {
 
     const user = await User.findOne({ email }).select("+password");
 
-    if (!user || !(await user.matchPassword(password))) {
+    // If no user found with that email, return specific message
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "No account found with this email",
+      });
+    }
+
+    // If user exists but password doesn't match, return specific message
+    const isMatch = await user.matchPassword(password);
+    if (!isMatch) {
       return res.status(400).json({
         success: false,
-        message: "Invalid credentials",
+        message: "Incorrect password",
       });
     }
 
@@ -124,7 +134,7 @@ exports.login = async (req, res) => {
       });
     }
 
-    const accessToken = generateAccessToken(user);
+    const token = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);
 
     user.refreshToken = refreshToken;
@@ -132,8 +142,8 @@ exports.login = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: "Login successful",
-      accessToken,
+      message: "Login successful you can now access your dashboard",
+      token,
       refreshToken,
       user: {
         id: user._id,
@@ -179,7 +189,7 @@ exports.refreshToken = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      accessToken: newAccessToken,
+      token: newAccessToken,
       refreshToken: newRefreshToken,
     });
   } catch (error) {
@@ -274,7 +284,7 @@ exports.forgotPassword = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: "Password reset link sent successfully to your email.",
+      message: "Password reset link sent successfully to your email. Please check your inbox.",
     });
   } catch (error) {
     return res.status(500).json({
@@ -313,7 +323,7 @@ exports.resetPassword = async (req, res) => {
     if (!user) {
       return res.status(400).json({
         success: false,
-        message: "Invalid or expired reset token",
+        message: "Invalid or expired reset token ",
       });
     }
 
@@ -323,11 +333,11 @@ exports.resetPassword = async (req, res) => {
 
     await user.save();
     const token = generateAccessToken(user);
-    
+
 
     return res.status(200).json({
       success: true,
-      message: "Password reset successful",
+      message: "Password reset successful now you can log in with your new password",
       token,
       user: {
         id: user._id,
