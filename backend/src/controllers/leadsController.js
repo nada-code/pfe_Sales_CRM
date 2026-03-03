@@ -71,14 +71,14 @@ exports.getAllLeads = async (req, res) => {
       limit = 10,
       search,
       status,
-      priority,
+      source,
       assignedTo,
     } = req.query;
 
     const query = { isDeleted: false };
 
     if (status) query.status = status;
-    if (priority) query.priority = priority;
+    if (source) query.source = source;
     if (assignedTo) query.assignedTo = assignedTo;
 
     if (search) {
@@ -147,15 +147,18 @@ exports.deleteLead = async (req, res) => {
 };
 
 ////////////////////////////////////////////////////////////
-// ✅ ASSIGN LEAD TO SALESMAN
+// ✅ ASSIGN LEAD TO SALESMAN (or unassign if salesmanId is null)
 ////////////////////////////////////////////////////////////
 exports.assignLead = async (req, res) => {
   try {
     const { salesmanId } = req.body;
 
-    const user = await User.findById(salesmanId);
-    if (!user || user.role !== 'salesman')
-      return res.status(400).json({ message: 'Invalid salesman' });
+    // Validate salesman only if salesmanId is provided
+    if (salesmanId) {
+      const user = await User.findById(salesmanId);
+      if (!user || user.role !== 'salesman')
+        return res.status(400).json({ message: 'Invalid salesman' });
+    }
 
     const lead = await Lead.findByIdAndUpdate(
       req.params.id,
@@ -166,6 +169,7 @@ exports.assignLead = async (req, res) => {
       },
       { new: true }
     );
+
 
     res.json(lead);
   } catch (error) {

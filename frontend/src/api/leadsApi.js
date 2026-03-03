@@ -43,7 +43,7 @@ leadsApi.interceptors.response.use(
         return leadsApi(originalRequest);
       } catch {
         clearTokens();
-        window.location.href = "/login";
+        // window.location.href = "/login";
       }
     }
     return Promise.reject(error);
@@ -63,6 +63,6 @@ export const addNote = (id, content) => leadsApi.post(`/leads/${id}/note`, { con
 export const importLeads = (leadsArray) => leadsApi.post("/leads/import", leadsArray);
 
 // === Users API ===
-export const fetchSalesmen = () => leadsApi.get("/users", { params: { role: "salesman" } });
+export const fetchSalesmen = () => leadsApi.get("/users", { params: { role: "salesman", isApproved: true } });
 
 export default leadsApi;

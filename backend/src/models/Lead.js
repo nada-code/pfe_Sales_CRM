@@ -42,11 +42,10 @@ const leadSchema = new mongoose.Schema(
     },
 
     // Catégorisation
-
-    priority: {
+    source: {
       type: String,
-      enum: ['High', 'Medium', 'Low'],
-      default: 'Medium',
+      enum: ['Website', 'Referral', 'Phone', 'Email', 'Social Media', 'Other'],
+      default: 'Other',
     },
 
     // Statut commercial
@@ -106,8 +105,7 @@ const leadSchema = new mongoose.Schema(
 leadSchema.index({ email: 1 });
 leadSchema.index({ assignedTo: 1 });
 leadSchema.index({ status: 1 });
-leadSchema.index({ priority: 1 });
-// leadSchema.index({ 'leadScore.overall': -1 });
+leadSchema.index({ source: 1 });
 leadSchema.index({ createdAt: -1 });
 leadSchema.index({ updatedAt: -1 });
 leadSchema.index({ isDeleted: 1 });

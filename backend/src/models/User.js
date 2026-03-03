@@ -45,6 +45,24 @@ const userSchema = new mongoose.Schema(
       default: true,
     },
 
+    isApproved: {
+      type: Boolean,
+      default: function() {
+        return this.role !== 'salesman'; // salesman requires approval
+      },
+    },
+
+    approvedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
+    },
+
+    approvedAt: {
+      type: Date,
+      default: null,
+    },
+
     // 🔥 Reset password
     resetPasswordToken: String,
     resetPasswordExpire: Date,

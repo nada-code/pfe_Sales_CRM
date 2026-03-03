@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { resetPassword } from '../../api/authApi';
-import './Auth.css';
+import '../../styles/Auth.css';
 import { toast } from "react-toastify";
 
 const ResetPassword = () => {

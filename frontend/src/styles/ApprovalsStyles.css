@@ -1,0 +1,367 @@
+/* ══════════════════════════════════════════════════════
+   ApprovalsStyles.css
+   Palette : indigo/violet + warm neutrals
+   ══════════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+/* ── Variables ───────────────────────────────────────── */
+:root {
+  --indigo-50:   #eef2ff;
+  --indigo-100:  #e0e7ff;
+  --indigo-400:  #818cf8;
+  --indigo-500:  #6366f1;
+  --indigo-600:  #4f46e5;
+  --indigo-700:  #4338ca;
+
+  --amber-100:   #fef3c7;
+  --amber-600:   #d97706;
+
+  --green-100:   #d1fae5;
+  --green-800:   #065f46;
+
+  --gray-50:     #f9fafb;
+  --gray-100:    #f3f4f6;
+  --gray-200:    #e5e7eb;
+  --gray-400:    #9ca3af;
+  --gray-500:    #6b7280;
+  --gray-700:    #374151;
+  --gray-900:    #111827;
+
+  --white:       #ffffff;
+
+  --shadow-xs:   0 1px 2px rgba(0,0,0,.05);
+  --shadow-md:   0 4px 16px rgba(99,102,241,.12), 0 2px 4px rgba(0,0,0,.04);
+  --shadow-btn:  0 4px 14px rgba(99,102,241,.40);
+
+  --radius-sm:   8px;
+  --radius-md:   12px;
+  --radius-lg:   16px;
+  --radius-pill: 100px;
+
+  --font:  'DM Sans','Segoe UI',sans-serif;
+  --ease:  cubic-bezier(.4, 0, .2, 1);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+/* ══════════════════ PAGE ══════════════════ */
+.approvals-page {
+  padding: 40px 32px 80px;
+  max-width: 860px;
+  font-family: var(--font);
+  color: var(--gray-900);
+  animation: fadeUp .45s var(--ease) both;
+}
+
+/* ══════════════════ HEADER ══════════════════ */
+.approvals-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 36px;
+  padding-bottom: 28px;
+  border-bottom: 1.5px solid var(--gray-200);
+}
+
+.approvals-title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--gray-900);
+  margin: 0 0 5px;
+  letter-spacing: -.02em;
+  line-height: 1.2;
+  font-family: 'Fraunces', serif;
+}
+
+.approvals-subtitle {
+  font-size: .875rem;
+  color: var(--gray-500);
+  margin: 0;
+}
+
+/* Badge */
+.approvals-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--amber-100);
+  color: var(--amber-600);
+  font-size: .78rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  padding: 6px 14px;
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(217,119,6,.2);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.approvals-badge::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--amber-600);
+  animation: pulse 1.8s ease infinite;
+}
+
+/* ══════════════════ LOADING ══════════════════ */
+.approvals-centered {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 72px 0;
+  gap: 14px;
+}
+
+.approvals-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid var(--gray-200);
+  border-top-color: var(--indigo-500);
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+}
+
+.approvals-centered p {
+  color: var(--gray-400);
+  font-size: .875rem;
+  margin: 0;
+}
+
+/* ══════════════════ EMPTY STATE ══════════════════ */
+.approvals-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 72px 24px;
+  text-align: center;
+  background: var(--gray-50);
+  border: 2px dashed var(--gray-200);
+  border-radius: var(--radius-lg);
+}
+
+.approvals-empty-icon  { font-size: 3rem; line-height: 1; margin-bottom: 6px; }
+.approvals-empty-title { font-size: 1.1rem; font-weight: 700; color: var(--gray-700); margin: 0; }
+.approvals-empty-text  { font-size: .875rem; color: var(--gray-500); margin: 0; max-width: 280px; }
+
+/* ══════════════════ LIST ══════════════════ */
+.approvals-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ── Card ────────────────────────────────────────── */
+.approvals-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: var(--white);
+  border: 1.5px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  padding: 20px 24px;
+  box-shadow: var(--shadow-xs);
+  transition: box-shadow .2s var(--ease),
+              border-color .2s var(--ease),
+              transform .2s var(--ease);
+  animation: fadeUp .4s var(--ease) both;
+}
+
+.approvals-card:hover {
+  box-shadow: var(--shadow-md);
+  border-color: var(--indigo-400);
+  transform: translateY(-2px);
+}
+
+/* stagger entrance */
+.approvals-list > *:nth-child(1) { animation-delay: .04s; }
+.approvals-list > *:nth-child(2) { animation-delay: .09s; }
+.approvals-list > *:nth-child(3) { animation-delay: .14s; }
+.approvals-list > *:nth-child(4) { animation-delay: .19s; }
+.approvals-list > *:nth-child(5) { animation-delay: .24s; }
+
+/* ── Card left ───────────────────────────────────── */
+.approvals-card-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+
+.approvals-avatar {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--indigo-500) 0%, var(--indigo-600) 100%);
+  color: var(--white);
+  font-weight: 700;
+  font-size: .95rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  letter-spacing: .02em;
+  box-shadow: 0 2px 8px rgba(99,102,241,.3);
+}
+
+.approvals-name {
+  font-size: .975rem;
+  font-weight: 700;
+  color: var(--gray-900);
+  margin: 0 0 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.approvals-email {
+  font-size: .825rem;
+  color: var(--gray-500);
+  margin: 0 0 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.approvals-date {
+  font-size: .75rem;
+  color: var(--gray-400);
+  margin: 0;
+}
+
+/* ── Card right ──────────────────────────────────── */
+.approvals-card-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-shrink: 0;
+}
+
+.approvals-role-badge {
+  background: var(--green-100);
+  color: var(--green-800);
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  padding: 4px 11px;
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(6,95,70,.15);
+}
+
+/* ── Approve button ───────────────────────────────── */
+.approvals-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 96px;
+  background: linear-gradient(135deg, var(--indigo-500) 0%, var(--indigo-600) 100%);
+  color: var(--white);
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 9px 22px;
+  font-family: var(--font);
+  font-size: .85rem;
+  font-weight: 700;
+  cursor: pointer;
+  overflow: hidden;
+  transition: opacity .15s var(--ease),
+              transform .18s var(--ease),
+              box-shadow .18s var(--ease);
+}
+
+/* shine sweep */
+.approvals-btn::after {
+  content: '';
+  position: absolute;
+  top: 0; left: -75%;
+  width: 50%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.25), transparent);
+  transform: skewX(-20deg);
+  transition: left .45s var(--ease);
+}
+
+.approvals-btn:hover:not(:disabled)::after { left: 130%; }
+
+.approvals-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-btn);
+}
+
+.approvals-btn:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: var(--shadow-xs);
+}
+
+.approvals-btn:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+/* Loading dots inside button */
+.approvals-btn-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.approvals-btn-dots span {
+  display: block;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--white);
+  animation: dotBounce .9s ease infinite;
+}
+
+.approvals-btn-dots span:nth-child(2) { animation-delay: .15s; }
+.approvals-btn-dots span:nth-child(3) { animation-delay: .30s; }
+
+/* ══════════════════ KEYFRAMES ══════════════════ */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+@keyframes pulse {
+  0%, 100% { opacity: 1;  transform: scale(1); }
+  50%       { opacity: .5; transform: scale(.7); }
+}
+
+@keyframes dotBounce {
+  0%, 80%, 100% { transform: translateY(0); }
+  40%           { transform: translateY(-5px); }
+}
+
+/* ══════════════════ RESPONSIVE ══════════════════ */
+@media (max-width: 580px) {
+  .approvals-page  { padding: 24px 16px 60px; }
+  .approvals-title { font-size: 1.3rem; }
+
+  .approvals-header {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .approvals-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .approvals-card-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .approvals-btn { flex: 1; justify-content: center; }
+}

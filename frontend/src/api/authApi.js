@@ -49,10 +49,29 @@ authApi.interceptors.response.use(
 
 // === Endpoints ===
 export const login = async (data) => {
-  const res = await authApi.post("/auth/login", data);
-  saveTokens(res.token, res.refreshToken);
-  return res;
+    const res = await authApi.post("/auth/login", data);
+    // Only save tokens if they exist (not for pending approval cases)
+    if (res.token && res.refreshToken) {
+      saveTokens(res.token, res.refreshToken);
+    }
+    return res;
+  
 };
+
+// authApi.js
+export const signup = async (data) => {
+  const response = await authApi.post('/auth/signup', data);
+  return response; // ← interceptor already returns { success, message, user }
+};
+export const getUsers = async ({ role, isApproved } = {}) => {
+  const params = new URLSearchParams();
+  if (role !== undefined) params.append('role', role);
+  if (isApproved !== undefined) params.append('isApproved', String(isApproved));
+  return await authApi.get(`/auth?${params.toString()}`);
+};
+
+export const approveUser = async (userId) =>
+  (await authApi.put(`/auth/users/${userId}/approve`)).data;
 
 export const logout = async () => {
   await authApi.post("/auth/logout");
@@ -62,5 +81,6 @@ export const logout = async () => {
 export const forgotPassword = (data) => authApi.post("/auth/forgot-password", data);
 export const resetPassword = (token, data) => authApi.post(`/auth/reset-password/${token}`, data);
 export const getMe = () => authApi.get("/auth/me");
+
 
 export default authApi;
