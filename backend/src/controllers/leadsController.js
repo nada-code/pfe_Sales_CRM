@@ -1,5 +1,6 @@
 const Lead = require('../models/Lead');
 const User = require('../models/User');
+const mongoose = require('mongoose');
 
 ////////////////////////////////////////////////////////////
 // ✅ CREATE LEAD
@@ -245,22 +246,18 @@ exports.addNote = async (req, res) => {
 ////////////////////////////////////////////////////////////
 exports.getLeadStats = async (req, res) => {
   try {
+    const match = { isDeleted: false };
+    if (req.user.role === 'salesman') {
+      match.assignedTo = new mongoose.Types.ObjectId(req.user.id); // ✅ cast en ObjectId
+    }
     const stats = await Lead.aggregate([
-      { $match: { isDeleted: false } },
-      {
-        $group: {
-          _id: '$status',
-          count: { $sum: 1 },
-        },
-      },
+      { $match: match },
+      { $group: { _id: '$status', count: { $sum: 1 } } },
     ]);
 
-    const total = await Lead.countDocuments({ isDeleted: false });
+    const total = await Lead.countDocuments(match);
 
-    res.json({
-      totalLeads: total,
-      byStatus: stats,
-    });
+    res.json({ totalLeads: total, byStatus: stats });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

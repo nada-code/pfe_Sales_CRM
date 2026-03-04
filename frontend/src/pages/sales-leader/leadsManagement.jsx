@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { assignLead } from "../../api/leadsApi";
+import { emitLeadUpdate } from "../../utils/leadEvents";
 import { STATUS_CFG, SOURCE_CFG } from "../../config/leadsConfig";
 import useLeads from "../../hooks/Uselead";
 import { Spinner, Toast } from "../../components/UI";
@@ -9,7 +10,6 @@ import Pagination  from "../../components/leads/Pagination";
 import NewLeadModal from "../../components/modals/NewLeadModal";
 import AssignModal  from "../../components/modals/AssignModal";
 import ImportModal  from "../../components/modals/ImportModal";
-
 import "../../styles/leads.css";
 
 export default function LeadsManagement() {
@@ -18,7 +18,7 @@ export default function LeadsManagement() {
     page, pages, total, setPage,
     filterStatus, filterSource, showUnassigned,
     setFilterStatus, setFilterSource, setShowUnassigned,
-    debouncedSearch, reload, reloadStats,
+    debouncedSearch, reload,
   } = useLeads();
 
   const [searchInput,  setSearchInput]  = useState("");
@@ -33,10 +33,11 @@ export default function LeadsManagement() {
   const statsMap        = Object.fromEntries((stats.byStatus || []).map((s) => [s._id, s.count]));
   const unassignedCount = leads.filter((l) => !l.assignedTo).length;
 
+  /* ── assign → emit ────────────────────────────────────────────────────── */
   async function handleAssign(leadId, salesmanId) {
     try {
       await assignLead(leadId, salesmanId || null);
-      reload(); reloadStats();
+      emitLeadUpdate(); 
       showToast(salesmanId ? "Lead assigned ✓" : "Assignment removed");
     } catch (e) {
       showToast(e?.response?.data?.message || "Failed to assign", "error");
@@ -47,7 +48,7 @@ export default function LeadsManagement() {
   return (
     <div className="leads-root">
 
-      {/* ── Header ── */}
+      {/* Header */}
       <div className="leads-header">
         <div>
           <h1 className="leads-header__title">Leads Management</h1>
@@ -61,11 +62,11 @@ export default function LeadsManagement() {
         </div>
       </div>
 
-      {/* ── Stats bar ── */}
+      {/* Stats bar */}
       <div className="leads-stats-bar">
         {Object.entries(STATUS_CFG).map(([k, v]) => (
           <div key={k} className="leads-stat-card"
-            style={{ borderTop: `3px solid ${v.color}` }}
+            style={{ borderLeft: `3px solid ${v.color}` }}
             onClick={() => setFilterStatus(filterStatus === k ? "" : k)}>
             <div className="leads-stat-card__count" style={{ color: v.color }}>{statsMap[k] ?? 0}</div>
             <div className="leads-stat-card__label">{v.label}</div>
@@ -73,13 +74,11 @@ export default function LeadsManagement() {
         ))}
       </div>
 
-      {/* ── Toolbar ── */}
+      {/* Toolbar */}
       <div className="leads-toolbar">
         <div className="leads-search">
           <span className="leads-search__icon">🔍</span>
-          <input
-            className="leads-search__input"
-            placeholder="Search by name, email, phone…"
+          <input className="leads-search__input" placeholder="Search by name, email, phone…"
             value={searchInput}
             onChange={(e) => { setSearchInput(e.target.value); debouncedSearch(e.target.value); }}
           />
@@ -91,8 +90,7 @@ export default function LeadsManagement() {
 
         <button
           className={`leads-unassigned-toggle leads-unassigned-toggle--${showUnassigned ? "on" : "off"}`}
-          onClick={() => setShowUnassigned(!showUnassigned)}
-        >
+          onClick={() => setShowUnassigned(!showUnassigned)}>
           <span className={`leads-unassigned-toggle__dot leads-unassigned-toggle__dot--${showUnassigned ? "on" : "off"}`} />
           Unassigned only
           {showUnassigned && unassignedCount > 0 && (
@@ -116,14 +114,13 @@ export default function LeadsManagement() {
           {[{ k: "table", icon: "≡" }, { k: "cards", icon: "⊞" }].map((v) => (
             <button key={v.k}
               className={`leads-view-switcher__btn${view === v.k ? " leads-view-switcher__btn--active" : ""}`}
-              onClick={() => setView(v.k)}>
-              {v.icon}
+              onClick={() => setView(v.k)}>{v.icon}
             </button>
           ))}
         </div>
       </div>
 
-      {/* ── Count ── */}
+      {/* Count */}
       <div className="leads-count">
         {loading && <Spinner size={12} />}
         Showing {leads.length} of {total} leads
@@ -132,35 +129,25 @@ export default function LeadsManagement() {
       </div>
 
       {error && (
-        <div className="leads-error-banner">
-          ⚠ {error}
+        <div className="leads-error-banner">⚠ {error}
           <button className="leads-error-banner__retry" onClick={reload}>Retry</button>
         </div>
       )}
 
-      {/* ── Skeleton ── */}
       {loading && leads.length === 0 && (
         <div className="leads-skeleton-grid">
           {[1,2,3,4,5,6].map((i) => (
-            <div key={i} className="leads-skeleton-card">
-              <div className="leads-skeleton-card__bar" />
-            </div>
+            <div key={i} className="leads-skeleton-card"><div className="leads-skeleton-card__bar" /></div>
           ))}
         </div>
       )}
 
-      {/* ── Views ── */}
       {(!loading || leads.length > 0) && (
         <>
           {view === "cards" && (
             <div className="leads-cards-grid">
               {leads.map((l) => (
-                <LeadCard
-                  key={l._id}
-                  lead={l}
-                  onAssignClick={setAssignModal}
-                  // ✅ No onStatusChange, no onNoteClick — read-only
-                />
+                <LeadCard key={l._id} lead={l} onAssignClick={setAssignModal} />
               ))}
               {leads.length === 0 && !loading && (
                 <div className="leads-empty">
@@ -171,42 +158,32 @@ export default function LeadsManagement() {
               )}
             </div>
           )}
-
           {view === "table" && (
-            <TableView
-              leads={leads}
-              onAssignClick={setAssignModal}
-              // ✅ No onStatusChange, no onNoteClick — read-only
-            />
+            <TableView leads={leads} onAssignClick={setAssignModal} />
           )}
-
           <Pagination page={page} pages={pages} total={total} onPage={setPage} />
         </>
       )}
 
-      {/* ── Modals ── */}
+      {/* Modals */}
       {newLeadModal && (
         <NewLeadModal
           onClose={() => setNewLeadModal(false)}
           onCreated={(lead) => {
-            // showToast(`Lead ${lead.data?.firstName || lead.firstName} created`);
-            reload(); reloadStats();
+            showToast(`Lead ${lead?.firstName || ""} created`);
+            emitLeadUpdate(); // ✅
           }}
         />
       )}
-
       {assignModal && (
-        <AssignModal
-          lead={assignModal}
-          onClose={() => setAssignModal(null)}
-          onAssign={handleAssign}
+        <AssignModal lead={assignModal} onClose={() => setAssignModal(null)} onAssign={handleAssign} 
+          
         />
       )}
-
       {importModal && (
         <ImportModal
           onClose={() => setImportModal(false)}
-          onDone={() => { reload(); reloadStats(); showToast("Import completed!"); }}
+          onDone={() => { emitLeadUpdate(); showToast("Import completed!"); }} // ✅
         />
       )}
 

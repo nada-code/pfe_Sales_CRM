@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { addNote } from "../../api/leadsApi";
+import { emitLeadUpdate } from "../../utils/leadEvents";
 
 export default function QuickNoteModal({ lead, onClose, onDone }) {
   const [text,    setText]    = useState("");
@@ -12,6 +13,7 @@ export default function QuickNoteModal({ lead, onClose, onDone }) {
     setError("");
     try {
       await addNote(lead._id, text.trim());
+      emitLeadUpdate(); // ✅ triggers reload everywhere
       onDone(`Note added for ${lead.firstName} ${lead.lastName}`);
       onClose();
     } catch (e) {
