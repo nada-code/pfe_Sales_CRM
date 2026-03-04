@@ -17,14 +17,14 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   const restoreSession = useCallback(async () => {
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
     if (!token) { setLoading(false); return; }
 
     try {
       const data = await getMe();   // authApi interceptor gère le header + refresh
       setUser(data.user);
     } catch {
-      localStorage.clear();
+      sessionStorage.clear();
       setUser(null);
     } finally {
       setLoading(false);

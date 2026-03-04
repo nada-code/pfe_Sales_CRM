@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { createLead } from "../../api/leadsApi";
 import { STATUS_CFG, SOURCE_CFG } from "../../config/leadsConfig";
-
+import { toast } from "react-toastify";
+// import { toast } from "react-hot-toast"; // import toast from "react-hot-toast";
 const DEFAULT_FORM = {
   firstName: "", lastName: "", email: "", phone: "",
   city: "", country: "Tunisie", status: "New", source: "Other",
@@ -15,21 +16,48 @@ export default function NewLeadModal({ onClose, onCreated }) {
   const set = (k, v) => setForm((p) => ({ ...p, [k]: v }));
 
   async function submit() {
-    setErr("");
-    if (!form.firstName || !form.lastName || !form.email || !form.phone) {
-      setErr("First name, last name, email and phone are required.");
-      return;
-    }
-    setSaving(true);
-    try { onCreated(await createLead(form)); onClose(); }
-    catch (e) { setErr(e.message); }
-    finally   { setSaving(false); }
+  setErr("");
+
+  if (!form.firstName || !form.lastName || !form.phone) {
+    const message = "First name, last name and phone are required.";
+    setErr(message);
+    toast.error(message);
+    return;
   }
 
+  setSaving(true);
+
+  try {
+    const response = await createLead(form);
+
+    // ✅ message de succès depuis le backend (fallback si absent)
+    const message = response.message ;
+    toast.success(message);
+
+    // ✅ lead depuis response.data
+    onCreated(response.data);
+    onClose();
+
+  } catch (error) {
+    // ✅ message d'erreur depuis le backend
+    const message =
+      error.response?.data?.message ||
+      error.message ||
+      "Failed to create lead";
+
+    setErr(message);
+    toast.error(message,{
+      autoClose: 2500,
+    pauseOnHover: false,
+    });
+  } finally {
+    setSaving(false);
+  }
+}
   const FIELDS = [
     { f: "firstName", l: "First Name *" },
     { f: "lastName",  l: "Last Name *"  },
-    { f: "email",     l: "Email *",   span: 2 },
+    { f: "email",     l: "Email ",   span: 2 },
     { f: "phone",     l: "Phone *",   span: 2 },
     { f: "city",      l: "City"       },
     { f: "country",   l: "Country"    },
@@ -63,7 +91,7 @@ export default function NewLeadModal({ onClose, onCreated }) {
                 {Object.keys(SOURCE_CFG).map((s) => <option key={s} value={s}>{SOURCE_CFG[s].label}</option>)}
               </select>
             </div>
-            {err && <div className="form-error">{err}</div>}
+            {/* {err && <div className="form-error">{err}</div>} */}
           </div>
         </div>
 

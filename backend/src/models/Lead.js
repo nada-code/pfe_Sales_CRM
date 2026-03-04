@@ -20,7 +20,7 @@ const leadSchema = new mongoose.Schema(
     },
     email: {
       type: String,
-      required: [true, 'Email is required'],
+      // required: [true, 'Email is required'],
       lowercase: true,
       match: [/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/, 'Please provide a valid email'],
     },
@@ -110,13 +110,11 @@ leadSchema.index({ createdAt: -1 });
 leadSchema.index({ updatedAt: -1 });
 leadSchema.index({ isDeleted: 1 });
 
-// Middleware pour générer le numéro de lead automatiquement
-leadSchema.pre('save', async function () {
-  if (this.isNew && !this.leadNumber) {
-    const count = await mongoose.model('Lead').countDocuments();
-    const year = new Date().getFullYear();
-    this.leadNumber = `LEAD-${year}-${String(count + 1).padStart(5, '0')}`;
-  }
-});
+// leadSchema.pre('save', async function () {
+//   if (this.isNew && !this.leadNumber) {
+//     const count = await mongoose.model('Lead').countDocuments();
+//     this.leadNumber = `#${String(count + 1).padStart(5, '0')}`;  // → #00001
+//   }
+// });
 
 module.exports = mongoose.model('Lead', leadSchema);

@@ -6,15 +6,22 @@ const User = require('../models/User');
 ////////////////////////////////////////////////////////////
 exports.createLead = async (req, res) => {
   try {
+    // existing Lead
+    const existingLead = await Lead.findOne({ firstName: req.body.firstName, lastName: req.body.lastName });
+    if (existingLead) return res.status(400).json({ message: 'Lead already exists' });
+   
     const lead = await Lead.create({
       ...req.body,
       createdBy: req.user.id,
     });
+    
 
-    res.status(201).json({
-      success: true,
-      data: lead,
-    });
+   // backend — leadsController.js
+res.status(201).json({
+  success: true,
+  message: `Lead ${lead.firstName} ${lead.lastName} created successfully`, // ✅ ajout
+  data: lead,
+});
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
@@ -135,11 +142,8 @@ exports.updateLead = async (req, res) => {
 ////////////////////////////////////////////////////////////
 exports.deleteLead = async (req, res) => {
   try {
-    await Lead.findByIdAndUpdate(req.params.id, {
-      isDeleted: true,
-      deletedAt: Date.now(),
-    });
-
+    const lead = await Lead.findByIdAndDelete(req.params.id);
+    if (!lead) return res.status(404).json({ message: 'Lead not found' });
     res.json({ message: 'Lead deleted successfully' });
   } catch (error) {
     res.status(500).json({ message: error.message });

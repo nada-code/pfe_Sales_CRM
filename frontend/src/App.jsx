@@ -3,45 +3,36 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import DashboardLayout from './layouts/DashboardLayout';
 import { ROLE_DEFAULT_ROUTE } from './config/roleConfig';
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { Toaster } from "react-hot-toast";
 
 // ── Auth pages ──────────────────────────────────────────────────────────────
-import Login        from './pages/Authentification/Login'; 
-import Signup       from './pages/Authentification/Signup'; 
-import ForgotPassword from './pages/Authentification/ForgetPassword'; 
-import ResetPassword  from './pages/Authentification/ResetPassword';  
+import Login          from './pages/Authentification/Login';
+import Signup         from './pages/Authentification/Signup';
+import ForgotPassword from './pages/Authentification/ForgetPassword';
+import ResetPassword  from './pages/Authentification/ResetPassword';
 
 // ── Sales Leader pages ───────────────────────────────────────────────────────
 import SalesLeaderDashboard  from './pages/sales-leader/Dashboard';
-import SalesLeaderTeam       from './pages/sales-leader/leadsMangement';
-import SalesLeaderApprovals  from './pages/sales-leader/Approvals'; 
-// import SalesLeaderPerformance from './pages/sales-leader/Performance';
-// import SalesLeaderReports    from './pages/sales-leader/Reports';
-// import SalesLeaderTargets    from './pages/sales-leader/Targets';
+import SalesLeaderTeam       from './pages/sales-leader/leadsManagement';
+import SalesLeaderApprovals  from './pages/sales-leader/Approvals';
+import LeadDetailPage        from './pages/sales-leader/LeadDetailPage'; 
 
-// ── CXP pages ────────────────────────────────────────────────────────────────
-// import CxpDashboard   from './pages/cxp/Dashboard';
-// import CxpClients     from './pages/cxp/Clients';
-// import CxpExperiences from './pages/cxp/Experiences';
-// import CxpAnalytics   from './pages/cxp/Analytics';
-// import CxpReports     from './pages/cxp/Reports';
-
-// ── Salesman pages ───────────────────────────────────────────────────────────
-// Chaque salesman voit les mêmes composants mais avec ses propres données
-// (filtrées côté API via req.user.id)
-// import SalesmanDashboard  from './pages/salesman/Dashboard';
-// import SalesmanProspects  from './pages/salesman/Prospects';
-// import SalesmanSales      from './pages/salesman/Sales';
-// import SalesmanReports    from './pages/salesman/Reports';
+// ─── CXP pages ─────────────────────────────────────────────────────
+import DashbordCxp           from './pages/Cxp/DashbordCxp';
 // ─────────────────────────────────────────────────────────────────────────────
 
-// Helper : wrap a page component inside the shared layout
+
+
+// Wrap a page inside DashboardLayout
 const W = (Page) => (
   <DashboardLayout>
+    
     <Page />
   </DashboardLayout>
 );
 
-// After login, redirect to role dashboard; if not logged in → /login
 function RoleRedirect() {
   const { user, loading } = useAuth();
   if (loading) return null;
@@ -51,22 +42,21 @@ function RoleRedirect() {
 
 export default function App() {
   return (
+    <>
     <BrowserRouter>
       <AuthProvider>
         <Routes>
 
-          {/* ── Public routes ── */}
-          <Route path="/login"          element={<Login />} />
-          <Route path="/signup"         element={<Signup />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password/:resetToken" element={<ResetPassword />} />
+          {/* ── Public ── */}
+          <Route path="/login"                         element={<Login />} />
+          <Route path="/signup"                        element={<Signup />} />
+          <Route path="/forgot-password"               element={<ForgotPassword />} />
+          <Route path="/reset-password/:resetToken"    element={<ResetPassword />} />
+          <Route path="/"                              element={<RoleRedirect />} />
 
-          {/* Root → smart redirect */}
-          <Route path="/" element={<RoleRedirect />} />
-
-          {/* ═══════════════════════════════════════════
+          {/* ══════════════════════════════════════════
               SALES LEADER
-          ═══════════════════════════════════════════ */}
+          ══════════════════════════════════════════ */}
           <Route path="/sales-leader/dashboard"
             element={<ProtectedRoute allowedRoles={['sales_leader']}>{W(SalesLeaderDashboard)}</ProtectedRoute>}
           />
@@ -76,52 +66,22 @@ export default function App() {
           <Route path="/sales-leader/approvals"
             element={<ProtectedRoute allowedRoles={['sales_leader']}>{W(SalesLeaderApprovals)}</ProtectedRoute>}
           />
-          {/* <Route path="/sales-leader/performance"
-            element={<ProtectedRoute allowedRoles={['sales_leader']}>{W(SalesLeaderPerformance)}</ProtectedRoute>}
-          />
-          <Route path="/sales-leader/reports"
-            element={<ProtectedRoute allowedRoles={['sales_leader']}>{W(SalesLeaderReports)}</ProtectedRoute>}
-          />
-          <Route path="/sales-leader/targets"
-            element={<ProtectedRoute allowedRoles={['sales_leader']}>{W(SalesLeaderTargets)}</ProtectedRoute>}
-          />
-          /> */}
 
-          {/* ═══════════════════════════════════════════
+          {/* ✅ Lead detail page — separate route */}
+          <Route path="/sales-leader/leads/:id"
+            element={
+              <ProtectedRoute allowedRoles={['sales_leader']}>
+                {W(LeadDetailPage)}
+              </ProtectedRoute>
+            }
+          />
+
+          {/* ══════════════════════════════════════════
               CXP
-          ═══════════════════════════════════════════ */}
-          {/* <Route path="/cxp/dashboard"
-            element={<ProtectedRoute allowedRoles={['cxp']}>{W(CxpDashboard)}</ProtectedRoute>}
+          ══════════════════════════════════════════ */}
+          <Route path="/cxp/dashboard"
+            element={<ProtectedRoute allowedRoles={['cxp']}>{W(DashbordCxp)}</ProtectedRoute>}
           />
-          <Route path="/cxp/clients"
-            element={<ProtectedRoute allowedRoles={['cxp']}>{W(CxpClients)}</ProtectedRoute>}
-          />
-          <Route path="/cxp/experiences"
-            element={<ProtectedRoute allowedRoles={['cxp']}>{W(CxpExperiences)}</ProtectedRoute>}
-          />
-          <Route path="/cxp/analytics"
-            element={<ProtectedRoute allowedRoles={['cxp']}>{W(CxpAnalytics)}</ProtectedRoute>}
-          />
-          <Route path="/cxp/reports"
-            element={<ProtectedRoute allowedRoles={['cxp']}>{W(CxpReports)}</ProtectedRoute>}
-          /> */}
-
-          {/* ═══════════════════════════════════════════
-              SALESMAN  (chaque salesman = même routes,
-              données filtrées via req.user.id en backend)
-          ═══════════════════════════════════════════ */}
-          {/* <Route path="/salesman/dashboard"
-            element={<ProtectedRoute allowedRoles={['salesman']}>{W(SalesmanDashboard)}</ProtectedRoute>}
-          />
-          <Route path="/salesman/prospects"
-            element={<ProtectedRoute allowedRoles={['salesman']}>{W(SalesmanProspects)}</ProtectedRoute>}
-          />
-          <Route path="/salesman/sales"
-            element={<ProtectedRoute allowedRoles={['salesman']}>{W(SalesmanSales)}</ProtectedRoute>}
-          />
-          <Route path="/salesman/reports"
-            element={<ProtectedRoute allowedRoles={['salesman']}>{W(SalesmanReports)}</ProtectedRoute>}
-          /> */}
 
           {/* Catch-all */}
           <Route path="*" element={<Navigate to="/" replace />} />
@@ -129,5 +89,56 @@ export default function App() {
         </Routes>
       </AuthProvider>
     </BrowserRouter>
+ <ToastContainer
+  position="top-right"
+  autoClose={3000}
+  hideProgressBar={false}
+  newestOnTop
+  closeOnClick
+  pauseOnHover
+  draggable
+  theme="colored"
+  toastClassName="custom-toast"
+  bodyClassName="custom-toast-body"
+/>
+ {/* <Toaster
+        position="top-right"
+        reverseOrder={false}
+        toastOptions={{
+          duration: 3000,
+          style: {
+            borderRadius: "10px",
+            background: "#333",
+            color: "#fff",
+            padding: "12px 16px",
+            fontWeight: "500",
+            boxShadow: "0 4px 14px rgba(0,0,0,0.25)",
+          },
+          success: {
+            style: {
+              background: "#4bb543",
+              color: "#fff",
+              padding: "12px 16px",
+              fontWeight: "500",
+              boxShadow: "0 4px 14px rgba(0,0,0,0.25)",
+              duration: 5000,
+            },
+            icon: "✅",
+          },
+          error: {
+            style: {
+              background: "#f00",
+              color: "#fff",
+              padding: "12px 16px",
+              fontWeight: "500",
+              boxShadow: "0 4px 14px rgba(0,0,0,0.25)",
+              duration: 5000,
+
+            },
+            icon: "❌",
+          },
+        }}
+      /> */}
+</>
   );
 }

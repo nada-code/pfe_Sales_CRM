@@ -7,8 +7,6 @@ const {
   getMe,
   forgotPassword,
   resetPassword,
-  getUsers,
-  approveUser
 } = require('../controllers/authController');
 const { protect, authorize } = require('../middleware/auth');
 
@@ -24,9 +22,6 @@ router.post('/reset-password/:resetToken', resetPassword);
 // Routes protégées
 router.post('/logout', protect, logout);
 router.get('/me', protect, getMe);
-router.get('/', protect, getUsers);
 
-// Routes pour les sales_leader
-router.put('/users/:userId/approve', protect, authorize('sales_leader'), approveUser);
 
 module.exports = router;
