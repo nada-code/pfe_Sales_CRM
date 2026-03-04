@@ -78,7 +78,7 @@ export default function useLeads() {
     return () => clearTimeout(timer);
   }, []);
 
-  const reloadStats
+  const reloadStats = async () => {
     try { setStats(await fetchStats()); } catch { /**/ }
   };
 
@@ -96,3 +96,4 @@ export default function useLeads() {
     reloadStats,
   };
 }
+
