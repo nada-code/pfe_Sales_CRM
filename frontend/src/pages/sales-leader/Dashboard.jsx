@@ -7,6 +7,7 @@ import {
   Users2Icon,
 } from "lucide-react";
 import { fetchStats, fetchLeads, fetchSalesmen } from "../../api/leadsApi";
+import { onLeadUpdate } from "../../utils/leadEvents";
 import "../../styles/DashboardStyles.css";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -204,6 +205,28 @@ export default function SalesLeaderDashboard() {
   useEffect(() => {
     loadStats(); loadLeads(); loadTeam();
   }, [loadStats, loadLeads, loadTeam, tick]);
+
+  /* ── listen to ANY lead update → reload silently ─────────────────────── */
+  useEffect(() => {
+    const unsub = onLeadUpdate(() => {
+      loadStats();
+      loadLeads();
+      loadTeam();
+    });
+    return unsub;
+  }, [loadStats, loadLeads, loadTeam]);
+
+  /* ── initial reload on mount ───────────────────────────────────────── */
+  useEffect(() => {
+    // Small delay to ensure component is fully mounted, then do a silent reload
+    // This catches any changes that happened just before this component mounted
+    const timer = setTimeout(() => {
+      loadStats();
+      loadLeads();
+      loadTeam();
+    }, 500);
+    return () => clearTimeout(timer);
+  }, []);
 
   // ── Derived ──────────────────────────────────────────────────────────────────
   const pipeline   = buildPipeline(leads);
