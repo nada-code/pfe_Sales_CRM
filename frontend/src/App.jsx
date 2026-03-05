@@ -1,42 +1,32 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { SocketProvider } from './context/SocketContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import DashboardLayout from './layouts/DashboardLayout';
 import { ROLE_DEFAULT_ROUTE } from './config/roleConfig';
-import { ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-import { Toaster } from "react-hot-toast";
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
-// ── Auth pages ──────────────────────────────────────────────────────────────
+// ── Auth pages ───────────────────────────────────────────────────────────────
 import Login          from './pages/Authentification/Login';
 import Signup         from './pages/Authentification/Signup';
 import ForgotPassword from './pages/Authentification/ForgetPassword';
 import ResetPassword  from './pages/Authentification/ResetPassword';
 
 // ── Sales Leader pages ───────────────────────────────────────────────────────
-import SalesLeaderDashboard  from './pages/sales-leader/Dashboard';
-import SalesLeaderTeam       from './pages/sales-leader/leadsManagement';
-import SalesLeaderApprovals  from './pages/sales-leader/Approvals';
-import LeadDetailPage        from './pages/sales-leader/LeadDetailPage'; 
+import SalesLeaderDashboard from './pages/sales-leader/Dashboard';
+import SalesLeaderTeam      from './pages/sales-leader/leadsManagement';
+import SalesLeaderApprovals from './pages/sales-leader/Approvals';
+import LeadDetailPage       from './pages/sales-leader/LeadDetailPage';
 
-// ── Salesman ──────────────────────────────────────────────────────────────────
+// ── Salesman pages ───────────────────────────────────────────────────────────
 import MyLeads      from './pages/salesman/MyLeads';
 import LeadWorkPage from './pages/salesman/LeadWorkPage';
 
+// ── CXP pages ────────────────────────────────────────────────────────────────
+import DashbordCxp from './pages/Cxp/DashbordCxp';
 
-// ─── CXP pages ─────────────────────────────────────────────────────
-import DashbordCxp           from './pages/Cxp/DashbordCxp';
-// ─────────────────────────────────────────────────────────────────────────────
-
-
-
-// Wrap a page inside DashboardLayout
-const W = (Page) => (
-  <DashboardLayout>
-    
-    <Page />
-  </DashboardLayout>
-);
+const W = (Page) => <DashboardLayout><Page /></DashboardLayout>;
 
 function RoleRedirect() {
   const { user, loading } = useAuth();
@@ -48,108 +38,54 @@ function RoleRedirect() {
 export default function App() {
   return (
     <>
-    <BrowserRouter>
-      <AuthProvider>
-        <Routes>
+      <BrowserRouter>
+        <AuthProvider>
+          <SocketProvider>
+            <Routes>
+              {/* ── Public ── */}
+              <Route path="/"                           element={<RoleRedirect />} />
+              <Route path="/login"                      element={<Login />} />
+              <Route path="/signup"                     element={<Signup />} />
+              <Route path="/forgot-password"            element={<ForgotPassword />} />
+              <Route path="/reset-password/:resetToken" element={<ResetPassword />} />
 
-          {/* ── Public ── */}
-          <Route path="/login"                         element={<Login />} />
-          <Route path="/signup"                        element={<Signup />} />
-          <Route path="/forgot-password"               element={<ForgotPassword />} />
-          <Route path="/reset-password/:resetToken"    element={<ResetPassword />} />
-          <Route path="/"                              element={<RoleRedirect />} />
+              {/* ── Sales Leader ── */}
+              <Route path="/sales-leader/dashboard"
+                element={<ProtectedRoute allowedRoles={['sales_leader']}>{W(SalesLeaderDashboard)}</ProtectedRoute>}
+              />
+              <Route path="/sales-leader/team"
+                element={<ProtectedRoute allowedRoles={['sales_leader']}>{W(SalesLeaderTeam)}</ProtectedRoute>}
+              />
+              <Route path="/sales-leader/approvals"
+                element={<ProtectedRoute allowedRoles={['sales_leader']}>{W(SalesLeaderApprovals)}</ProtectedRoute>}
+              />
+              <Route path="/sales-leader/leads/:id"
+                element={<ProtectedRoute allowedRoles={['sales_leader']}>{W(LeadDetailPage)}</ProtectedRoute>}
+              />
 
-          {/* ══════════════════════════════════════════
-              SALES LEADER
-          ══════════════════════════════════════════ */}
-          <Route path="/sales-leader/dashboard"
-            element={<ProtectedRoute allowedRoles={['sales_leader']}>{W(SalesLeaderDashboard)}</ProtectedRoute>}
-          />
-          <Route path="/sales-leader/team"
-            element={<ProtectedRoute allowedRoles={['sales_leader']}>{W(SalesLeaderTeam)}</ProtectedRoute>}
-          />
-          <Route path="/sales-leader/approvals"
-            element={<ProtectedRoute allowedRoles={['sales_leader']}>{W(SalesLeaderApprovals)}</ProtectedRoute>}
-          />
+              {/* ── Salesman ── */}
+              <Route path="/salesman/dashboard"
+                element={<ProtectedRoute allowedRoles={['salesman']}>{W(MyLeads)}</ProtectedRoute>}
+              />
+              <Route path="/salesman/prospects"
+                element={<ProtectedRoute allowedRoles={['salesman']}>{W(MyLeads)}</ProtectedRoute>}
+              />
+              <Route path="/salesman/leads/:id"
+                element={<ProtectedRoute allowedRoles={['salesman']}>{W(LeadWorkPage)}</ProtectedRoute>}
+              />
 
-          <Route path="/sales-leader/leads/:id"
-            element={<ProtectedRoute allowedRoles={['sales_leader']}>{W(LeadDetailPage)} </ProtectedRoute>}
-          />
+              {/* ── CXP ── */}
+              <Route path="/cxp/dashboard"
+                element={<ProtectedRoute allowedRoles={['cxp']}>{W(DashbordCxp)}</ProtectedRoute>}
+              />
 
-           {/*/* ══════════════════════════════════════════
-           Salesman 
-            ══════════════════════════════════════════*/}
-          <Route path="/salesman/dashboard"
-            element={<ProtectedRoute allowedRoles={['salesman']}>{W(MyLeads)}</ProtectedRoute>} />
-          <Route path="/salesman/prospects"
-            element={<ProtectedRoute allowedRoles={['salesman']}>{W(MyLeads)}</ProtectedRoute>} />
-          <Route path="/salesman/leads/:id"
-            element={<ProtectedRoute allowedRoles={['salesman']}>{W(LeadWorkPage)}</ProtectedRoute>} />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </SocketProvider>
+        </AuthProvider>
+      </BrowserRouter>
 
-
-          {/* ══════════════════════════════════════════
-              CXP
-          ══════════════════════════════════════════ */}
-          <Route path="/cxp/dashboard"
-            element={<ProtectedRoute allowedRoles={['cxp']}>{W(DashbordCxp)}</ProtectedRoute>}
-          />
-
-          {/* Catch-all */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-
-        </Routes>
-      </AuthProvider>
-    </BrowserRouter>
- <ToastContainer
-  position="top-right"
-  autoClose={3000}
-  hideProgressBar={false}
-  newestOnTop
-  closeOnClick
-  pauseOnHover
-  draggable
-  theme="colored"
-  toastClassName="custom-toast"
-  bodyClassName="custom-toast-body"
-/>
- {/* <Toaster
-        position="top-right"
-        reverseOrder={false}
-        toastOptions={{
-          duration: 3000,
-          style: {
-            borderRadius: "10px",
-            background: "#333",
-            color: "#fff",
-            padding: "12px 16px",
-            fontWeight: "500",
-            boxShadow: "0 4px 14px rgba(0,0,0,0.25)",
-          },
-          success: {
-            style: {
-              background: "#4bb543",
-              color: "#fff",
-              padding: "12px 16px",
-              fontWeight: "500",
-              boxShadow: "0 4px 14px rgba(0,0,0,0.25)",
-              duration: 5000,
-            },
-            icon: "✅",
-          },
-          error: {
-            style: {
-              background: "#f00",
-              color: "#fff",
-              padding: "12px 16px",
-              fontWeight: "500",
-              boxShadow: "0 4px 14px rgba(0,0,0,0.25)",
-              duration: 5000,
-
-            },
-            icon: "❌",
-          },
-        }}
-      /> */}
-</>
+      <ToastContainer position="top-right" autoClose={3000} />
+    </>
   );
 }

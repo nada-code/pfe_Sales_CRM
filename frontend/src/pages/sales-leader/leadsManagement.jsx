@@ -1,16 +1,15 @@
-import { useState } from "react";
-import { assignLead } from "../../api/leadsApi";
-import { emitLeadUpdate } from "../../utils/leadEvents";
-import { STATUS_CFG, SOURCE_CFG } from "../../config/leadsConfig";
-import useLeads from "../../hooks/Uselead";
-import { Spinner, Toast } from "../../components/UI";
-import LeadCard    from "../../components/leads/LeadCard";
-import TableView   from "../../components/leads/TableView";
-import Pagination  from "../../components/leads/Pagination";
-import NewLeadModal from "../../components/modals/NewLeadModal";
-import AssignModal  from "../../components/modals/AssignModal";
-import ImportModal  from "../../components/modals/ImportModal";
-import "../../styles/leads.css";
+import { useState } from 'react';
+import { assignLead } from '../../api/leadsApi';
+import { STATUS_CFG, SOURCE_CFG } from '../../config/leadsConfig';
+import useLeads from '../../hooks/Uselead';
+import { Spinner, Toast } from '../../components/UI';
+import LeadCard     from '../../components/leads/LeadCard';
+import TableView    from '../../components/leads/TableView';
+import Pagination   from '../../components/leads/Pagination';
+import NewLeadModal from '../../components/modals/NewLeadModal';
+import AssignModal  from '../../components/modals/AssignModal';
+import ImportModal  from '../../components/modals/ImportModal';
+import '../../styles/leads.css';
 
 export default function LeadsManagement() {
   const {
@@ -21,26 +20,26 @@ export default function LeadsManagement() {
     debouncedSearch, reload,
   } = useLeads();
 
-  const [searchInput,  setSearchInput]  = useState("");
-  const [view,         setView]         = useState("table");
+  const [searchInput,  setSearchInput]  = useState('');
+  const [view,         setView]         = useState('table');
   const [assignModal,  setAssignModal]  = useState(null);
   const [newLeadModal, setNewLeadModal] = useState(false);
   const [importModal,  setImportModal]  = useState(false);
   const [toast,        setToast]        = useState(null);
 
-  const showToast = (msg, type = "success") => setToast({ message: msg, type });
+  const showToast = (msg, type = 'success') => setToast({ message: msg, type });
 
   const statsMap        = Object.fromEntries((stats.byStatus || []).map((s) => [s._id, s.count]));
   const unassignedCount = leads.filter((l) => !l.assignedTo).length;
 
-  /* ── assign → emit ────────────────────────────────────────────────────── */
+  // ── Assign ─────────────────────────────────────────────────────────────────
+  // No need to call emitLeadUpdate() — server emits lead:updated via socket
   async function handleAssign(leadId, salesmanId) {
     try {
       await assignLead(leadId, salesmanId || null);
-      emitLeadUpdate(); 
-      showToast(salesmanId ? "Lead assigned ✓" : "Assignment removed");
+      showToast(salesmanId ? 'Lead assigned ✓' : 'Assignment removed');
     } catch (e) {
-      showToast(e?.response?.data?.message || "Failed to assign", "error");
+      showToast(e?.response?.data?.message || 'Failed to assign', 'error');
     }
     setAssignModal(null);
   }
@@ -171,7 +170,6 @@ export default function LeadsManagement() {
           onClose={() => setNewLeadModal(false)}
           onCreated={(lead) => {
             showToast(`Lead ${lead?.firstName || ""} created`);
-            emitLeadUpdate(); // ✅
           }}
         />
       )}
@@ -183,7 +181,7 @@ export default function LeadsManagement() {
       {importModal && (
         <ImportModal
           onClose={() => setImportModal(false)}
-          onDone={() => { emitLeadUpdate(); showToast("Import completed!"); }} // ✅
+          onCompleted={() => { reload(); showToast("Import completed!"); }} // ✅
         />
       )}
 

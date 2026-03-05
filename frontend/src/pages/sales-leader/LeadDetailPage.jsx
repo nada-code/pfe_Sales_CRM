@@ -1,36 +1,35 @@
-import { useState, useCallback, useEffect, useRef } from "react";
-import { useParams, useNavigate, useSearchParams } from "react-router-dom";
-import { fetchLeadById, updateLead, deleteLead } from "../../api/leadsApi";
-import { emitLeadUpdate, onLeadUpdate } from "../../utils/leadEvents";
-import { STATUS_CFG, SOURCE_CFG } from "../../config/leadsConfig";
-import { fullName, fmtDate, fmtTime, acolor, av2 } from "../../utils/leadsUtils";
-import { Spinner } from "../../components/UI";
-import "../../styles/leads.css";
-import "../../styles/LeadDetail.css";
+import { useState, useCallback, useEffect } from 'react';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { fetchLeadById, updateLead, deleteLead } from '../../api/leadsApi';
+import { useSocket } from '../../context/Socketcontext';
+import { STATUS_CFG, SOURCE_CFG } from '../../config/leadsConfig';
+import { fullName, fmtDate, fmtTime, acolor, av2 } from '../../utils/leadsUtils';
+import { Spinner } from '../../components/UI';
+import '../../styles/leads.css';
+import '../../styles/LeadDetail.css';
 
 const NOTES_PREVIEW = 2;
 const NOTE_TRUNCATE = 120;
-const POLL_MS       = 30_000;
 
 export default function LeadDetailPage() {
   const { id }         = useParams();
   const navigate       = useNavigate();
   const [searchParams] = useSearchParams();
+  const socket         = useSocket();
 
-  const [tab,           setTab]           = useState(searchParams.get("tab") || "overview");
+  const [tab,           setTab]           = useState(searchParams.get('tab') || 'overview');
   const [lead,          setLead]          = useState(null);
   const [loading,       setLoading]       = useState(true);
   const [error,         setError]         = useState(null);
   const [editData,      setEditData]      = useState(null);
   const [saving,        setSaving]        = useState(false);
-  const [saveError,     setSaveError]     = useState("");
+  const [saveError,     setSaveError]     = useState('');
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting,      setDeleting]      = useState(false);
   const [notesExpanded, setNotesExpanded] = useState(false);
   const [expandedNote,  setExpandedNote]  = useState(null);
-  const loadRef = useRef(null);
 
-  /* ── loader ───────────────────────────────────────────────────────────── */
+  // ── Loader ─────────────────────────────────────────────────────────────────
   const load = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
     try {
@@ -39,60 +38,78 @@ export default function LeadDetailPage() {
       setEditData({
         firstName: data.firstName, lastName:  data.lastName,
         email:     data.email,     phone:     data.phone,
-        city:      data.city    || "", country: data.country || "",
+        city:      data.city    || '', country: data.country || '',
         source:    data.source,
       });
     } catch (e) {
-      setError(e?.response?.data?.message || e.message || "Failed to load");
+      setError(e?.response?.data?.message || e.message || 'Failed to load');
     } finally {
       if (!silent) setLoading(false);
     }
   }, [id]);
 
-  // Keep ref updated with latest callback
-  loadRef.current = load;
-
   useEffect(() => { load(); }, [load]);
 
-  /* ── listen to ANY lead update → reload silently ────────────────────── */
+  // ── Socket: update this lead in real-time ──────────────────────────────────
   useEffect(() => {
-    const unsub = onLeadUpdate(() => {
-      if (loadRef.current) loadRef.current(true);
-    });
-    return unsub;
-  }, []);
+    if (!socket) return;
+    const onUpdated = (updatedLead) => {
+      if (updatedLead._id === id) {
+        setLead(updatedLead);
+        setEditData({
+          firstName: updatedLead.firstName, lastName:  updatedLead.lastName,
+          email:     updatedLead.email,     phone:     updatedLead.phone,
+          city:      updatedLead.city    || '', country: updatedLead.country || '',
+          source:    updatedLead.source,
+        });
+      }
+    };
+    const onDeleted = ({ _id }) => {
+      if (_id === id) navigate(-1);
+    };
+    socket.on('lead:updated', onUpdated);
+    socket.on('lead:deleted', onDeleted);
+    return () => {
+      socket.off('lead:updated', onUpdated);
+      socket.off('lead:deleted', onDeleted);
+    };
+  }, [socket, id, navigate]);
 
-  /* ── poll every 30s ──────────────────────────────────────────────────── */
-  useEffect(() => {
-    const timer = setInterval(() => load(true), POLL_MS);
-    return () => clearInterval(timer);
-  }, [load]);
-
-  /* ── save edit ────────────────────────────────────────────────────────── */
+  // ── Save edit ──────────────────────────────────────────────────────────────
   async function handleSave() {
-    setSaving(true); setSaveError("");
+    setSaving(true); setSaveError('');
     try {
+      // Server broadcasts lead:updated — local state updates via socket handler
       await updateLead(id, editData);
-      emitLeadUpdate(); // ✅ triggers reload everywhere
-      setTab("overview");
+      setTab('overview');
     } catch (e) {
-      setSaveError(e?.response?.data?.message || e.message || "Failed to save");
-    } finally { setSaving(false); }
+      setSaveError(e?.response?.data?.message || 'Failed to save');
+    } finally {
+      setSaving(false);
+    }
   }
 
-  /* ── delete ───────────────────────────────────────────────────────────── */
+  // ── Delete ─────────────────────────────────────────────────────────────────
   async function handleDelete() {
     setDeleting(true);
     try {
       await deleteLead(id);
-      emitLeadUpdate(); // ✅ list reloads after delete
-      navigate("/sales-leader/team", { replace: true });
+      // Server broadcasts lead:deleted → socket handler navigates back
     } catch (e) {
-      setDeleting(false); setConfirmDelete(false);
-      setError(e?.response?.data?.message || "Failed to delete");
+      setSaveError(e?.response?.data?.message || 'Failed to delete');
+      setDeleting(false);
+      setConfirmDelete(false);
     }
   }
 
+  if (loading) return <div className="ld-loading"><Spinner size={36} /><span>Loading lead…</span></div>;
+  if (error)   return (
+    <div className="ld-error">
+      <span className="ld-error__icon">⚠</span><p>{error}</p>
+      <button className="btn-primary" onClick={() => navigate(-1)}>← Go back</button>
+    </div>
+  );
+  if (!lead) return null;
   /* ── helpers ──────────────────────────────────────────────────────────── */
   const heroColor = lead ? acolor(lead._id) : "#6366f1";
   const statusCfg = lead ? (STATUS_CFG[lead.status] || STATUS_CFG.New)   : null;

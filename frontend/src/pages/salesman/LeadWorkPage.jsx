@@ -1,97 +1,90 @@
-import { useState, useCallback, useEffect, useRef } from "react";
-import { useParams, useNavigate, useSearchParams } from "react-router-dom";
-import { fetchLeadById, changeStatus as apiChangeStatus, addNote as apiAddNote } from "../../api/leadsApi";
-import { emitLeadUpdate, onLeadUpdate } from "../../utils/leadEvents";
-import { STATUS_CFG, SOURCE_CFG } from "../../config/leadsConfig";
-import { fmtDate, fmtTime, acolor,  } from "../../utils/leadsUtils";
-import { Spinner } from "../../components/UI";
-import "../../styles/leads.css";
-import "../../styles/SalesmanLeads.css";
-
-const POLL_MS = 30_000;
+import { useState, useCallback, useEffect, useRef } from 'react';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { fetchLeadById, changeStatus as apiChangeStatus, addNote as apiAddNote } from '../../api/leadsApi';
+import { useSocket } from '../../context/Socketcontext';
+import { STATUS_CFG, SOURCE_CFG } from '../../config/leadsConfig';
+import { fmtDate, fmtTime, acolor } from '../../utils/leadsUtils';
+import { Spinner } from '../../components/UI';
+import '../../styles/leads.css';
+import '../../styles/SalesmanLeads.css';
 
 export default function LeadWorkPage() {
   const { id }         = useParams();
   const navigate       = useNavigate();
   const [searchParams] = useSearchParams();
+  const socket         = useSocket();
 
-  const [tab,          setTab]          = useState(searchParams.get("tab") || "overview");
+  const [tab,          setTab]          = useState(searchParams.get('tab') || 'overview');
   const [lead,         setLead]         = useState(null);
   const [loading,      setLoading]      = useState(true);
   const [error,        setError]        = useState(null);
   const [statusSaving, setStatusSaving] = useState(false);
-  const [noteText,     setNoteText]     = useState("");
+  const [noteText,     setNoteText]     = useState('');
   const [noteSaving,   setNoteSaving]   = useState(false);
-  const [noteError,    setNoteError]    = useState("");
+  const [noteError,    setNoteError]    = useState('');
   const [toast,        setToast]        = useState(null);
   const noteRef = useRef(null);
-  const loadRef = useRef(null);
 
-  const showToast = (msg, type = "success") => {
+  const showToast = (msg, type = 'success') => {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 3000);
   };
 
-  /* ── loader ───────────────────────────────────────────────────────────── */
+  // ── Loader ─────────────────────────────────────────────────────────────────
   const load = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
-    try { setLead(await fetchLeadById(id)); }
-    catch (e) { setError(e?.response?.data?.message || e.message || "Failed to load"); }
+    try   { setLead(await fetchLeadById(id)); }
+    catch (e) { setError(e?.response?.data?.message || e.message || 'Failed to load'); }
     finally   { if (!silent) setLoading(false); }
   }, [id]);
 
-  // Keep ref updated with latest callback
-  loadRef.current = load;
-
   useEffect(() => { load(); }, [load]);
 
-  /* ── listen to ANY lead update → reload silently ────────────────────── */
+  // ── Socket: reload when THIS lead is updated ───────────────────────────────
   useEffect(() => {
-    const unsub = onLeadUpdate(() => {
-      if (loadRef.current) loadRef.current(true);
-    });
-    return unsub;
-  }, []);
-
-  /* ── poll every 30s ──────────────────────────────────────────────────── */
-  useEffect(() => {
-    const id = setInterval(() => load(true), POLL_MS);
-    return () => clearInterval(id);
-  }, [load]);
+    if (!socket) return;
+    const handler = (updatedLead) => {
+      if (updatedLead._id === id) setLead(updatedLead);
+    };
+    socket.on('lead:updated', handler);
+    return () => socket.off('lead:updated', handler);
+  }, [socket, id]);
 
   useEffect(() => {
-    if (tab === "notes") setTimeout(() => noteRef.current?.focus(), 100);
+    if (tab === 'notes') setTimeout(() => noteRef.current?.focus(), 100);
   }, [tab]);
 
-  /* ── status change ────────────────────────────────────────────────────── */
+  // ── Status change ──────────────────────────────────────────────────────────
   async function handleStatusChange(newStatus) {
     if (newStatus === lead.status || statusSaving) return;
     setStatusSaving(true);
     try {
+      // Server will broadcast lead:updated via socket — local state updates automatically
       await apiChangeStatus(lead._id, newStatus);
-      emitLeadUpdate(); // ✅ triggers reload everywhere
       showToast(`Status → ${STATUS_CFG[newStatus]?.label}`);
     } catch (e) {
-      showToast(e?.response?.data?.message || "Failed to update status", "error");
-    } finally { setStatusSaving(false); }
+      showToast(e?.response?.data?.message || 'Failed to update status', 'error');
+    } finally {
+      setStatusSaving(false);
+    }
   }
 
-  /* ── add note ─────────────────────────────────────────────────────────── */
+  // ── Add note ───────────────────────────────────────────────────────────────
   async function handleAddNote() {
-    if (!noteText.trim()) { setNoteError("Note cannot be empty."); return; }
-    setNoteSaving(true); setNoteError("");
+    if (!noteText.trim()) { setNoteError('Note cannot be empty.'); return; }
+    setNoteSaving(true); setNoteError('');
     try {
       await apiAddNote(lead._id, noteText.trim());
-      setNoteText("");
-      emitLeadUpdate(); // ✅ triggers reload everywhere
-      showToast("Note added ✓");
+      setNoteText('');
+      showToast('Note added ✓');
     } catch (e) {
-      setNoteError(e?.response?.data?.message || "Failed to add note");
-    } finally { setNoteSaving(false); }
+      setNoteError(e?.response?.data?.message || 'Failed to add note');
+    } finally {
+      setNoteSaving(false);
+    }
   }
 
-  /* ── helpers ──────────────────────────────────────────────────────────── */
-  const heroColor = lead ? acolor(lead._id) : "#10b981";
+  const heroColor = lead ? acolor(lead._id)                          : '#10b981';
   const statusCfg = lead ? (STATUS_CFG[lead.status] || STATUS_CFG.New)   : null;
   const sourceCfg = lead ? (SOURCE_CFG[lead.source] || SOURCE_CFG.Other) : null;
 

@@ -1,18 +1,17 @@
-import { useState, useRef, useCallback, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { fetchLeads, fetchStats, changeStatus } from "../../api/leadsApi";
-import { emitLeadUpdate, onLeadUpdate } from "../../utils/leadEvents";
-import { STATUS_CFG, SOURCE_CFG, PAGE_SIZE } from "../../config/leadsConfig";
-import { fmtDate, acolor } from "../../utils/leadsUtils";
-import { Spinner, Toast, SourceBadge } from "../../components/UI";
-import Pagination from "../../components/leads/Pagination";
-import "../../styles/leads.css";
-import "../../styles/SalesmanLeads.css";
-
-const POLL_MS = 30_000;
+import { useState, useRef, useCallback, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { fetchLeads, fetchStats, changeStatus } from '../../api/leadsApi';
+import { useSocket } from '../../context/SocketContext';
+import { STATUS_CFG, SOURCE_CFG, PAGE_SIZE } from '../../config/leadsConfig';
+import { fmtDate, acolor } from '../../utils/leadsUtils';
+import { Spinner, Toast, SourceBadge } from '../../components/UI';
+import Pagination from '../../components/leads/Pagination';
+import '../../styles/leads.css';
+import '../../styles/SalesmanLeads.css';
 
 export default function MyLeads() {
   const navigate = useNavigate();
+  const socket   = useSocket();
 
   const [leads,        setLeads]        = useState([]);
   const [stats,        setStats]        = useState({ byStatus: [] });
@@ -21,17 +20,17 @@ export default function MyLeads() {
   const [page,         setPage]         = useState(1);
   const [pages,        setPages]        = useState(1);
   const [total,        setTotal]        = useState(0);
-  const [search,       setSearch]       = useState("");
-  const [searchInput,  setSearchInput]  = useState("");
-  const [filterStatus, setFilterStatus] = useState("");
-  const [view,         setView]         = useState("table");
+  const [search,       setSearch]       = useState('');
+  const [searchInput,  setSearchInput]  = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
+  const [view,         setView]         = useState('table');
   const [toast,        setToast]        = useState(null);
   const debounceTimer = useRef(null);
-  const loadRef = useRef(null);
+  const loadRef       = useRef(null);
 
-  const showToast = (msg, type = "success") => setToast({ message: msg, type });
+  const showToast = (msg, type = 'success') => setToast({ message: msg, type });
 
-  /* ── loader ───────────────────────────────────────────────────────────── */
+  // ── Loader ─────────────────────────────────────────────────────────────────
   const load = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
     try {
@@ -52,50 +51,45 @@ export default function MyLeads() {
     }
   }, [page, search, filterStatus]);
 
-  // Keep ref updated with latest callback
   loadRef.current = load;
 
   useEffect(() => { load(); }, [load]);
 
-  /* ── listen to ANY lead update → reload silently ─────────────────────── */
+  // ── Socket: silent reload on any lead event ────────────────────────────────
   useEffect(() => {
-    const unsub = onLeadUpdate(() => {
-      if (loadRef.current) loadRef.current(true);
-    });
-    return unsub;
-  }, []);
+    if (!socket) return;
+    const reload = () => loadRef.current?.(true);
+    socket.on('lead:updated',  reload);
+    socket.on('lead:created',  reload);
+    socket.on('lead:deleted',  reload);
+    socket.on('lead:imported', reload);
+    return () => {
+      socket.off('lead:updated',  reload);
+      socket.off('lead:created',  reload);
+      socket.off('lead:deleted',  reload);
+      socket.off('lead:imported', reload);
+    };
+  }, [socket]);
 
-  /* ── poll every 30s ───────────────────────────────────────────────────── */
-  useEffect(() => {
-    const timer = setInterval(() => load(true), POLL_MS);
-    return () => clearInterval(timer);
-  }, [load]);
-
-  /* ── initial reload on mount ───────────────────────────────────────── */
-  useEffect(() => {
-    // Small delay to ensure component is fully mounted, then do a silent reload
-    // This catches any changes that happened just before this component mounted
-    const timer = setTimeout(() => load(true), 500);
-    return () => clearTimeout(timer);
-  }, []);
-
-  const debouncedSearch = (val) => {
+  // ── Search debounce ────────────────────────────────────────────────────────
+  function handleSearchInput(e) {
+    const val = e.target.value;
+    setSearchInput(val);
     clearTimeout(debounceTimer.current);
     debounceTimer.current = setTimeout(() => { setSearch(val); setPage(1); }, 400);
-  };
-
-  /* ── status change → emit ─────────────────────────────────────────────── */
-  async function handleStatusChange(leadId, newStatus, e) {
-    e.stopPropagation();
-    try {
-      await changeStatus(leadId, newStatus);
-      emitLeadUpdate(); // ✅ all pages update
-      showToast(`Status → ${STATUS_CFG[newStatus]?.label}`);
-    } catch (err) {
-      showToast(err?.response?.data?.message || "Failed to update status", "error");
-    }
   }
 
+  // ── Status change ──────────────────────────────────────────────────────────
+  // No emitLeadUpdate needed — server broadcasts lead:updated via socket
+  async function handleStatusChange(leadId, newStatus, e) {
+    e?.stopPropagation();
+    try {
+      await changeStatus(leadId, newStatus);
+      showToast(`Status updated`);
+    } catch (err) {
+      showToast(err?.response?.data?.message || 'Failed to update status', 'error');
+    }
+  }
   const statsMap = Object.fromEntries((stats.byStatus || []).map((s) => [s._id, s.count]));
 
   return (
@@ -126,7 +120,7 @@ export default function MyLeads() {
           <span className="leads-search__icon">🔍</span>
           <input className="leads-search__input" placeholder="Search by name, email, phone…"
             value={searchInput}
-            onChange={(e) => { setSearchInput(e.target.value); debouncedSearch(e.target.value); }} />
+            onChange={(e) => { setSearchInput(e.target.value); handleSearchInput(e.target.value); }} />
           {searchInput && (
             <button className="leads-search__clear"
               onClick={() => { setSearchInput(""); setSearch(""); setPage(1); }}>✕</button>

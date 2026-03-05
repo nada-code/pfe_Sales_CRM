@@ -410,69 +410,53 @@ exports.getUsers = async (req, res) => {
 // ============================================================
 // APPROVE USER (sales_leader only)
 // ============================================================
-
 exports.approveUser = async (req, res) => {
   try {
-    const { userId } = req.params;
-    const approverRole = req.user.role;
+    const { userId }     = req.params;
+    const approverRole   = req.user.role;
 
-    // Check if requester is sales_leader
     if (approverRole !== 'sales_leader') {
-      return res.status(403).json({
-        success: false,
-        message: "Only sales leaders can approve users",
-      });
+      return res.status(403).json({ success: false, message: 'Only sales leaders can approve users' });
     }
 
-    // Find user to approve
     const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
-    }
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
 
-    // Only allow approving salesmen
     if (user.role !== 'salesman') {
-      return res.status(400).json({
-        success: false,
-        message: "Only salesman accounts can be approved",
-      });
+      return res.status(400).json({ success: false, message: 'Only salesman accounts can be approved' });
     }
 
-    // Check if already approved
     if (user.isApproved) {
-      return res.status(400).json({
-        success: false,
-        message: "User is already approved",
-      });
+      return res.status(400).json({ success: false, message: 'User is already approved' });
     }
 
-    // Approve the user
     user.isApproved = true;
     user.approvedBy = req.user._id;
     user.approvedAt = new Date();
     await user.save();
 
+    // Notify all connected clients that a new salesman was approved
+    req.app.get('io').emit('user:approved', {
+      userId:    user._id,
+      firstName: user.firstName,
+      lastName:  user.lastName,
+    });
+
     res.status(200).json({
       success: true,
-      message: "User approved successfully",
+      message: 'User approved successfully',
       data: {
-        id: user._id,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        role: user.role,
+        id:         user._id,
+        email:      user.email,
+        firstName:  user.firstName,
+        lastName:   user.lastName,
+        role:       user.role,
         isApproved: user.isApproved,
         approvedAt: user.approvedAt,
       },
     });
   } catch (error) {
-    console.error("🔥 APPROVE USER ERROR:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Failed to approve user",
-    });
+    console.error('🔥 APPROVE USER ERROR:', error);
+    return res.status(500).json({ success: false, message: 'Failed to approve user' });
   }
 };
