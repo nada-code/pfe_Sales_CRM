@@ -11,3 +11,4 @@ export const changeStatus  = (id, status) => api.put(`/leads/${id}/status`, { st
 export const addNote       = (id, content) => api.post(`/leads/${id}/note`, { content });
 export const importLeads   = (arr)         => api.post('/leads/import', arr);
 export const fetchSalesmen = ()            => api.get('/users', { params: { role: 'salesman', isApproved: true } });
+export const fetchTeam = ()            => api.get('/users/team');

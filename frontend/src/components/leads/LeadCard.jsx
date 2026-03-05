@@ -5,12 +5,12 @@ import { StatusBadge, SourceBadge } from "../UI";
 
 const NOTE_PREVIEW = 70;
 
-export default function LeadCard({ lead, onAssignClick }) {
+export default function LeadCard({ lead, onAssignClick, basePath = "/sales-leader/leads" }) {
   const navigate    = useNavigate();
   const statusColor = STATUS_CFG[lead.status]?.color || "#e2e8f0";
 
-  const goTo      = () => navigate(`/sales-leader/leads/${lead._id}`);
-  const goToNotes = (e) => { e.stopPropagation(); navigate(`/sales-leader/leads/${lead._id}?tab=notes`); };
+  const goTo      = ()  => navigate(`${basePath}/${lead._id}`);
+  const goToNotes = (e) => { e.stopPropagation(); navigate(`${basePath}/${lead._id}?tab=notes`); };
   const shortId = (id) => String(id).slice(-6).toUpperCase();
 
   const lastNote  = lead.notes?.[lead.notes.length - 1];

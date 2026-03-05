@@ -99,7 +99,7 @@ exports.getAllLeads = async (req, res) => {
         .populate('assignedTo', 'firstName lastName')
         .skip((page - 1) * limit)
         .limit(Number(limit))
-        .sort({ createdAt: -1 }),
+        .sort({ createdAt: 1 }),
       Lead.countDocuments(query),
     ]);
 
@@ -112,19 +112,40 @@ exports.getAllLeads = async (req, res) => {
 ////////////////////////////////////////////////////////////
 // UPDATE LEAD
 ////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////
 exports.updateLead = async (req, res) => {
   try {
-    const lead = await Lead.findByIdAndUpdate(
+    let allowedFields;
+
+    if (req.user.role === 'salesman') {
+      // Salesman : peut éditer les infos de contact uniquement
+      // Ne peut PAS changer assignedTo, isDeleted, createdBy, etc.
+      const { firstName, lastName, email, phone, city, country, source } = req.body;
+      allowedFields = { firstName, lastName, email, phone, city, country, source };
+
+      // Vérifier que le lead lui est bien assigné
+      const lead = await Lead.findOne({ _id: req.params.id, assignedTo: req.user.id, isDeleted: false });
+      if (!lead) return res.status(403).json({ message: 'Lead not found or not assigned to you' });
+
+    } else {
+      // Sales leader : peut tout modifier
+      allowedFields = { ...req.body };
+    }
+
+    // Retirer les champs undefined
+    Object.keys(allowedFields).forEach((k) => allowedFields[k] === undefined && delete allowedFields[k]);
+
+    const updated = await Lead.findByIdAndUpdate(
       req.params.id,
-      { ...req.body, updatedAt: Date.now() },
-      { new: true }
+      { ...allowedFields, updatedAt: Date.now() },
+      { new: true, runValidators: true }
     ).populate('assignedTo', 'firstName lastName');
 
-    if (!lead) return res.status(404).json({ message: 'Lead not found' });
+    if (!updated) return res.status(404).json({ message: 'Lead not found' });
 
-    getIO(req).emit('lead:updated', lead);
+    getIO(req).emit('lead:updated', updated);
 
-    res.json(lead);
+    res.json(updated);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }

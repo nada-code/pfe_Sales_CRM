@@ -208,8 +208,8 @@ body {
 }
 .sidebar.collapsed .sidebar-btn { gap: 0; padding: 10px; justify-content: center; }
 
-.sidebar-btn.settings { color: rgba(255,255,255,0.35); }
-.sidebar-btn.settings:hover { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.75); }
+.sidebar-btn.Profil { color: rgba(255,255,255,0.35); }
+.sidebar-btn.Profil:hover { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.75); }
 
 .sidebar-btn.logout { color: rgba(239,68,68,0.55); }
 .sidebar-btn.logout:hover { background: rgba(239,68,68,0.09); color: #f87171; }
@@ -471,7 +471,6 @@ body {
 }
 .modal-info-value.highlight { color: var(--role-accent); font-weight: 700; }
 
-.modal-actions { display: flex; gap: 10px; margin-top: 20px; }
 .modal-btn-outline {
   flex: 1; padding: 11px; border-radius: 12px;
   border: 1.5px solid var(--role-accent);
@@ -490,6 +489,42 @@ body {
 }
 .modal-btn-filled:hover { opacity: 0.88; }
 
+/* ================================================================
+   ADD these rules to the bottom of your existing DashboardLayout.css
+   ================================================================ */
+
+/* ── Modal footer actions ───────────────────────────────────────── */
+.modal-actions {
+  display: flex; align-items: center; justify-content: flex-end;
+  gap: 10px; padding: 16px 24px 20px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.modal-btn-secondary {
+  padding: 9px 18px; border-radius: 10px;
+  font-size: 13px; font-weight: 600;
+  background: #f1f5f9; color: #64748b;
+  border: none; cursor: pointer; font-family: 'DM Sans', sans-serif;
+  transition: background .15s;
+}
+.modal-btn-secondary:hover { background: #e2e8f0; }
+
+.modal-btn-primary {
+  padding: 9px 18px; border-radius: 10px;
+  font-size: 13px; font-weight: 700;
+  background: var(--role-gradient); color: #fff;
+  border: none; cursor: pointer; font-family: 'DM Sans', sans-serif;
+  display: flex; align-items: center; gap: 7px;
+  box-shadow: 0 4px 12px var(--role-shadow, rgba(99,102,241,.3));
+  transition: opacity .15s, transform .15s;
+}
+.modal-btn-primary:hover { opacity: .9; transform: translateY(-1px); }
+
+/* ── Modal info value highlight ─────────────────────────────────── */
+.modal-info-value--highlight {
+  color: var(--role-accent) !important;
+  font-weight: 700 !important;
+}
 /* ════════════════════════════════════════════════════════════
    RESPONSIVE — TABLET  ≤ 1024px
 ════════════════════════════════════════════════════════════ */
@@ -557,3 +592,5 @@ body {
   .topbar-app-name, .topbar-chevron { display: none; }
   .modal-actions { flex-direction: column; }
 }
+
+

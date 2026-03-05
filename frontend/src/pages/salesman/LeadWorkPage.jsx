@@ -1,12 +1,18 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { fetchLeadById, changeStatus as apiChangeStatus, addNote as apiAddNote } from '../../api/leadsApi';
-import { useSocket } from '../../context/Socketcontext';
-import { STATUS_CFG, SOURCE_CFG } from '../../config/leadsConfig';
-import { fmtDate, fmtTime, acolor } from '../../utils/leadsUtils';
-import { Spinner } from '../../components/UI';
-import '../../styles/leads.css';
-import '../../styles/SalesmanLeads.css';
+
+import {
+  fetchLeadById,
+  updateLead,
+  changeStatus as apiChangeStatus,
+  addNote as apiAddNote,
+} from "../../api/leadsApi";
+import { useSocket } from "../../context/Socketcontext";
+import { STATUS_CFG, SOURCE_CFG } from "../../config/leadsConfig";
+import { fmtDate, fmtTime, acolor } from "../../utils/leadsUtils";
+import { Spinner } from "../../components/UI";
+import "../../styles/leads.css";
+import "../../styles/SalesmanLeads.css";
 
 export default function LeadWorkPage() {
   const { id }         = useParams();
@@ -14,44 +20,76 @@ export default function LeadWorkPage() {
   const [searchParams] = useSearchParams();
   const socket         = useSocket();
 
-  const [tab,          setTab]          = useState(searchParams.get('tab') || 'overview');
+  const [tab,          setTab]          = useState(searchParams.get("tab") || "overview");
   const [lead,         setLead]         = useState(null);
   const [loading,      setLoading]      = useState(true);
   const [error,        setError]        = useState(null);
   const [statusSaving, setStatusSaving] = useState(false);
-  const [noteText,     setNoteText]     = useState('');
+  const [noteText,     setNoteText]     = useState("");
   const [noteSaving,   setNoteSaving]   = useState(false);
-  const [noteError,    setNoteError]    = useState('');
+  const [noteError,    setNoteError]    = useState("");
   const [toast,        setToast]        = useState(null);
+
+  // Edit tab state
+  const [editData,  setEditData]  = useState(null);
+  const [saving,    setSaving]    = useState(false);
+  const [saveError, setSaveError] = useState("");
+
   const noteRef = useRef(null);
 
-  const showToast = (msg, type = 'success') => {
+  const showToast = (msg, type = "success") => {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 3000);
   };
 
-  // ── Loader ─────────────────────────────────────────────────────────────────
+  // ── Loader ──────────────────────────────────────────────────────────────────
   const load = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
-    try   { setLead(await fetchLeadById(id)); }
-    catch (e) { setError(e?.response?.data?.message || e.message || 'Failed to load'); }
-    finally   { if (!silent) setLoading(false); }
+    try {
+      const data = await fetchLeadById(id);
+      setLead(data);
+      setEditData({
+        firstName: data.firstName || "",
+        lastName:  data.lastName  || "",
+        email:     data.email     || "",
+        phone:     data.phone     || "",
+        city:      data.city      || "",
+        country:   data.country   || "",
+        source:    data.source    || "Other",
+      });
+    } catch (e) {
+      setError(e?.response?.data?.message || e.message || "Failed to load");
+    } finally {
+      if (!silent) setLoading(false);
+    }
   }, [id]);
 
   useEffect(() => { load(); }, [load]);
 
-  // ── Socket: reload when THIS lead is updated ───────────────────────────────
+  // ── Socket: update this lead in real-time ────────────────────────────────
   useEffect(() => {
     if (!socket) return;
     const handler = (updatedLead) => {
-      if (updatedLead._id === id) setLead(updatedLead);
+      if (updatedLead._id === id) {
+        setLead(updatedLead);
+        setEditData({
+          firstName: updatedLead.firstName || "",
+          lastName:  updatedLead.lastName  || "",
+          email:     updatedLead.email     || "",
+          phone:     updatedLead.phone     || "",
+          city:      updatedLead.city      || "",
+          country:   updatedLead.country   || "",
+          source:    updatedLead.source    || "Other",
+        });
+      }
     };
-    socket.on('lead:updated', handler);
-    return () => socket.off('lead:updated', handler);
+    socket.on("lead:updated", handler);
+    return () => socket.off("lead:updated", handler);
   }, [socket, id]);
 
   useEffect(() => {
-    if (tab === 'notes') setTimeout(() => noteRef.current?.focus(), 100);
+    if (tab === "notes") setTimeout(() => noteRef.current?.focus(), 100);
+    if (tab !== "edit")  setSaveError("");
   }, [tab]);
 
   // ── Status change ──────────────────────────────────────────────────────────
@@ -59,29 +97,41 @@ export default function LeadWorkPage() {
     if (newStatus === lead.status || statusSaving) return;
     setStatusSaving(true);
     try {
-      // Server will broadcast lead:updated via socket — local state updates automatically
       await apiChangeStatus(lead._id, newStatus);
       showToast(`Status → ${STATUS_CFG[newStatus]?.label}`);
     } catch (e) {
-      showToast(e?.response?.data?.message || 'Failed to update status', 'error');
-    } finally {
-      setStatusSaving(false);
-    }
+      showToast(e?.response?.data?.message || "Failed to update status", "error");
+    } finally { setStatusSaving(false); }
   }
 
   // ── Add note ───────────────────────────────────────────────────────────────
   async function handleAddNote() {
-    if (!noteText.trim()) { setNoteError('Note cannot be empty.'); return; }
-    setNoteSaving(true); setNoteError('');
+    if (!noteText.trim()) { setNoteError("Note cannot be empty."); return; }
+    setNoteSaving(true); setNoteError("");
     try {
       await apiAddNote(lead._id, noteText.trim());
-      setNoteText('');
-      showToast('Note added ✓');
+      setNoteText("");
+      showToast("Note added ✓");
     } catch (e) {
-      setNoteError(e?.response?.data?.message || 'Failed to add note');
-    } finally {
-      setNoteSaving(false);
+      setNoteError(e?.response?.data?.message || "Failed to add note");
+    } finally { setNoteSaving(false); }
+  }
+
+  // ── Save edit ──────────────────────────────────────────────────────────────
+  async function handleSaveEdit() {
+    if (!editData.firstName || !editData.lastName || !editData.email) {
+      setSaveError("First name, last name and email are required.");
+      return;
     }
+    setSaving(true); setSaveError("");
+    try {
+      // Server will broadcast lead:updated via socket — state updates automatically
+      await updateLead(lead._id, editData);
+      setTab("overview");
+      showToast("Lead updated ✓");
+    } catch (e) {
+      setSaveError(e?.response?.data?.message || "Failed to save changes");
+    } finally { setSaving(false); }
   }
 
   const heroColor = lead ? acolor(lead._id)                          : '#10b981';
@@ -112,16 +162,17 @@ export default function LeadWorkPage() {
               {`${lead.firstName?.[0]||""}${lead.lastName?.[0]||""}`.toUpperCase()}
             </div>
             <div className="lw-hero__identity">
-              <div className="lw-hero__id">{lead.leadNumber || ""}</div>
+              <div className="lw-hero__id">{lead._id?.slice(-6).toUpperCase() || "—"}</div>
               <h1 className="lw-hero__name">{lead.firstName} {lead.lastName}</h1>
               <div className="lw-hero__meta">{lead.email} · {lead.phone}</div>
               {lead.city && <div className="lw-hero__meta">📍 {lead.city}{lead.country ? `, ${lead.country}` : ""}</div>}
               <div className="lw-hero__badges">
-                <span className="lw-pill" style={{ borderColor: sourceCfg.color + "66", color: sourceCfg.color }}>
-                  {sourceCfg.icon} {sourceCfg.label}
+                <span className="lw-pill" style={{ color: statusCfg.color, borderColor: statusCfg.color + "55", background: statusCfg.light + "22" }}>
+                  {statusCfg.label}
                 </span>
-                <span className="lw-pill lw-pill--notes">✎ {lead.notes?.length || 0} note(s)</span>
-              </div>
+                <span className="lw-pill lw-pill--notes">
+                  {sourceCfg?.icon} {sourceCfg?.label}
+                </span>  </div>
             </div>
 
             {/* Status panel */}
@@ -158,6 +209,8 @@ export default function LeadWorkPage() {
             {[
               { k: "overview", icon: "◈", label: "Overview" },
               { k: "notes",    icon: "✎", label: `Notes (${lead.notes?.length || 0})` },
+              { k: "edit",     icon: "✦", label: "Edit" },
+
             ].map((t) => (
               <button key={t.k} className={`lw-tab${tab === t.k ? " lw-tab--active" : ""}`}
                 onClick={() => setTab(t.k)}>
@@ -274,6 +327,93 @@ export default function LeadWorkPage() {
                 ))}
               </div>
             )}
+          </div>
+        )}
+{/* ── Edit tab ── */}
+        {tab === "edit" && (
+          <div className="ld-edit">
+            <div className="ld-edit__header">
+              <h2 className="ld-edit__title">Edit Lead</h2>
+              <p className="ld-edit__sub">Update contact information for this lead.</p>
+            </div>
+
+            {saveError && <div className="ld-edit__error">⚠ {saveError}</div>}
+
+            <div className="ld-edit__grid">
+              {[
+                { f: "firstName", l: "First name *", p: "First name" },
+                { f: "lastName",  l: "Last name *",  p: "Last name"  },
+                { f: "email",     l: "Email *",      p: "email@example.com", t: "email" },
+                { f: "phone",     l: "Phone",        p: "+216 xx xxx xxx" },
+                { f: "city",      l: "City",         p: "City"    },
+                { f: "country",   l: "Country",      p: "Country" },
+              ].map(({ f, l, p, t }) => (
+                <div key={f} className="ld-field">
+                  <label className="ld-field__label">{l}</label>
+                  <input
+                    className="ld-field__input"
+                    type={t || "text"}
+                    value={editData[f]}
+                    placeholder={p}
+                    disabled={saving}
+                    onChange={(e) => setEditData({ ...editData, [f]: e.target.value })}
+                  />
+                </div>
+              ))}
+
+              <div className="ld-field ld-field--full">
+                <label className="ld-field__label">Source</label>
+                <select
+                  className="ld-field__input"
+                  value={editData.source}
+                  disabled={saving}
+                  onChange={(e) => setEditData({ ...editData, source: e.target.value })}
+                >
+                  {Object.entries(SOURCE_CFG).map(([k, v]) => (
+                    <option key={k} value={k}>{v.icon} {v.label}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="ld-edit__actions">
+              <button
+                className="ld-btn-cancel"
+                onClick={() => { setTab("overview"); setSaveError(""); }}
+                disabled={saving}
+              >
+                Cancel
+              </button>
+              <button
+                className="ld-btn-save"
+                onClick={handleSaveEdit}
+                disabled={saving || !editData?.firstName || !editData?.lastName || !editData?.email}
+              >
+                {saving ? "Saving…" : "✓ Save changes"}
+              </button>
+            </div>
+          </div>
+        )}
+        {tab === "history" && (
+          <div className="lw-history">
+            <div className="lw-history__header">
+              <div>
+                <h2 className="lw-history__title">History</h2>
+                <p className="lw-history__sub">View the history of this lead.</p>
+              </div>
+            </div>
+
+            <div className="lw-history__list">
+              {lead.history?.map((h, i) => (
+                <div key={i} className="lw-history-item" style={{ animationDelay: `${i * 40}ms` }}>
+                  <div className="lw-history-item__header">
+                    <span className="lw-history-item__dot" />
+                    <span className="lw-history-item__time">{fmtDate(h.createdAt)} · {fmtTime(h.createdAt)}</span>
+                  </div>
+                  <p className="lw-history-item__body">{h.content}</p>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>

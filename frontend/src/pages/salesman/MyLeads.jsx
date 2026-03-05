@@ -1,16 +1,15 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { fetchLeads, fetchStats, changeStatus } from '../../api/leadsApi';
 import { useSocket } from '../../context/SocketContext';
+import LeadCard     from '../../components/leads/LeadCard';
+import TableView    from '../../components/leads/TableView';
 import { STATUS_CFG, SOURCE_CFG, PAGE_SIZE } from '../../config/leadsConfig';
-import { fmtDate, acolor } from '../../utils/leadsUtils';
 import { Spinner, Toast, SourceBadge } from '../../components/UI';
 import Pagination from '../../components/leads/Pagination';
 import '../../styles/leads.css';
 import '../../styles/SalesmanLeads.css';
 
 export default function MyLeads() {
-  const navigate = useNavigate();
   const socket   = useSocket();
 
   const [leads,        setLeads]        = useState([]);
@@ -27,8 +26,6 @@ export default function MyLeads() {
   const [toast,        setToast]        = useState(null);
   const debounceTimer = useRef(null);
   const loadRef       = useRef(null);
-
-  const showToast = (msg, type = 'success') => setToast({ message: msg, type });
 
   // ── Loader ─────────────────────────────────────────────────────────────────
   const load = useCallback(async (silent = false) => {
@@ -80,14 +77,12 @@ export default function MyLeads() {
   }
 
   // ── Status change ──────────────────────────────────────────────────────────
-  // No emitLeadUpdate needed — server broadcasts lead:updated via socket
   async function handleStatusChange(leadId, newStatus, e) {
     e?.stopPropagation();
     try {
       await changeStatus(leadId, newStatus);
-      showToast(`Status updated`);
     } catch (err) {
-      showToast(err?.response?.data?.message || 'Failed to update status', 'error');
+      setToast({ type: "error", message: err?.response?.data?.message || "Failed to update status" });
     }
   }
   const statsMap = Object.fromEntries((stats.byStatus || []).map((s) => [s._id, s.count]));
@@ -163,127 +158,30 @@ export default function MyLeads() {
 
       {(!loading || leads.length > 0) && (
         <>
-          {view === "table" && (
-            <div className="table-wrap">
-              <table className="leads-table">
-                <thead>
-                  <tr>{["#ID","Lead","Phone","Source","Status","Notes","Created",""].map((h) => <th key={h}>{h}</th>)}</tr>
-                </thead>
-                <tbody>
-                  {leads.map((l) => {
-                    const lastNote  = l.notes?.[l.notes.length - 1];
-                    const noteShort = lastNote?.content?.slice(0, 55);
-                    const hasMore   = lastNote?.content?.length > 55;
-                    return (
-                      <tr key={l._id} onClick={() => navigate(`/salesman/leads/${l._id}`)}>
-                        <td><span className="table-id">{l.leadNumber || "—"}</span></td>
-                        <td>
-                          <div className="table-lead-cell">
-                            <div className="sm-av" style={{ background: acolor(l._id) }}>
-                              {`${l.firstName?.[0]||""}${l.lastName?.[0]||""}`.toUpperCase()}
-                            </div>
-                            <div>
-                              <div className="table-lead-name">{l.firstName} {l.lastName}</div>
-                              <div className="table-contact-email">{l.email}</div>
-                            </div>
-                          </div>
-                        </td>
-                        <td><span className="table-contact-phone">{l.phone || "—"}</span></td>
-                        <td><SourceBadge source={l.source} /></td>
-                        <td onClick={(e) => e.stopPropagation()}>
-                          <select className="sm-status-select" value={l.status}
-                            style={{ color: STATUS_CFG[l.status]?.color, background: STATUS_CFG[l.status]?.light, borderColor: STATUS_CFG[l.status]?.color + "55" }}
-                            onChange={(e) => handleStatusChange(l._id, e.target.value, e)}>
-                            {Object.entries(STATUS_CFG).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
-                          </select>
-                        </td>
-                        <td onClick={(e) => e.stopPropagation()}>
-                          <button className={`table-notes-cell${l.notes?.length ? " table-notes-cell--has" : ""}`}
-                            onClick={() => navigate(`/salesman/leads/${l._id}?tab=notes`)}>
-                            <div className="table-notes-cell__top">
-                              <span className="table-notes-cell__icon">✎</span>
-                              <span className="table-notes-cell__count">{l.notes?.length || 0} {l.notes?.length === 1 ? "note" : "notes"}</span>
-                            </div>
-                            {noteShort && <p className="table-notes-cell__preview">{noteShort}{hasMore ? "…" : ""}</p>}
-                          </button>
-                        </td>
-                        <td><span className="table-date">{fmtDate(l.createdAt)}</span></td>
-                        <td>
-                          <button className="btn-cancel btn-cancel--sm"
-                            onClick={(e) => { e.stopPropagation(); navigate(`/salesman/leads/${l._id}`); }}>
-                            Open →
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-              {leads.length === 0 && !loading && <div className="table-empty">No leads assigned to you yet</div>}
-            </div>
-          )}
-
           {view === "cards" && (
-            <div className="leads-cards-grid">
-              {leads.map((l) => {
-                const lastNote  = l.notes?.[l.notes.length - 1];
-                const noteShort = lastNote?.content?.slice(0, 70);
-                const hasMore   = lastNote?.content?.length > 70;
-                const sc = STATUS_CFG[l.status] || STATUS_CFG.New;
-                return (
-                  <div key={l._id} className="lead-card" onClick={() => navigate(`/salesman/leads/${l._id}`)}>
-                    <div className="lead-card__priority-bar" style={{ background: sc.color }} />
-                    <div className="lead-card__id">{l.leadNumber || "—"}</div>
-                    <div className="lead-card__header">
-                      <div className="lead-card__info">
-                        <div className="lead-card__name">{l.firstName} {l.lastName}</div>
-                        <div className="lead-card__phone">{l.phone}</div>
+                      <div className="leads-cards-grid">
+                        {leads.map((l) => (
+      <LeadCard key={l._id} lead={l} basePath="/salesman/leads" />
+    ))}
+                        {leads.length === 0 && !loading && (
+                          <div className="leads-empty">
+                            <div className="leads-empty__icon">🔍</div>
+                            <div className="leads-empty__title">No leads found</div>
+                            <div className="leads-empty__hint">Try adjusting your filters</div>
+                          </div>
+                        )}
                       </div>
-                    </div>
-                    <div className="lead-card__badges" onClick={(e) => e.stopPropagation()}>
-                      <select className="sm-status-select sm-status-select--card" value={l.status}
-                        style={{ color: sc.color, background: sc.light, borderColor: sc.color + "55" }}
-                        onChange={(e) => handleStatusChange(l._id, e.target.value, e)}>
-                        {Object.entries(STATUS_CFG).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
-                      </select>
-                      <SourceBadge source={l.source} />
-                    </div>
-                    {noteShort ? (
-                      <button className="lead-card__notes-preview"
-                        onClick={(e) => { e.stopPropagation(); navigate(`/salesman/leads/${l._id}?tab=notes`); }}>
-                        <div className="lead-card__notes-preview__header">
-                          <span className="lead-card__notes-preview__icon">✎</span>
-                          <span className="lead-card__notes-preview__count">{l.notes.length} {l.notes.length === 1 ? "note" : "notes"}</span>
-                        </div>
-                        <p className="lead-card__notes-preview__text">{noteShort}{hasMore ? "…" : ""}</p>
-                      </button>
-                    ) : (
-                      <button className="lead-card__notes-empty sm-add-note-hint"
-                        onClick={(e) => { e.stopPropagation(); navigate(`/salesman/leads/${l._id}?tab=notes`); }}>
-                        ✎ Add first note →
-                      </button>
                     )}
-                    <div className="lead-card__divider" />
-                    <div className="lead-card__footer">
-                      <span className="lead-card__date">{fmtDate(l.createdAt, { month: "short", day: "numeric" })}</span>
-                      <button className="btn-cancel btn-cancel--sm lead-card__view-btn"
-                        onClick={(e) => { e.stopPropagation(); navigate(`/salesman/leads/${l._id}`); }}>
-                        Open →
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-              {leads.length === 0 && !loading && (
-                <div className="leads-empty">
-                  <div className="leads-empty__icon">📋</div>
-                  <div className="leads-empty__title">No leads assigned to you yet</div>
-                </div>
-              )}
-            </div>
-          )}
-
-          <Pagination page={page} pages={pages} total={total} onPage={setPage} />
+                    {view === "table" && (
+  <TableView
+    leads={leads}
+    basePath="/salesman/leads"
+    onStatusChange={handleStatusChange}
+  />
+)}
+                    <Pagination page={page} pages={pages} total={total} onPage={setPage} />
+            
+                   
         </>
       )}
 

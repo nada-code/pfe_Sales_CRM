@@ -26,6 +26,8 @@ import LeadWorkPage from './pages/salesman/LeadWorkPage';
 // ── CXP pages ────────────────────────────────────────────────────────────────
 import DashbordCxp from './pages/Cxp/DashbordCxp';
 
+  import ProfilePage from './pages/Profile/ProfilePage';
+
 const W = (Page) => <DashboardLayout><Page /></DashboardLayout>;
 
 function RoleRedirect() {
@@ -53,7 +55,7 @@ export default function App() {
               <Route path="/sales-leader/dashboard"
                 element={<ProtectedRoute allowedRoles={['sales_leader']}>{W(SalesLeaderDashboard)}</ProtectedRoute>}
               />
-              <Route path="/sales-leader/team"
+              <Route path="/sales-leader/leads-management"
                 element={<ProtectedRoute allowedRoles={['sales_leader']}>{W(SalesLeaderTeam)}</ProtectedRoute>}
               />
               <Route path="/sales-leader/approvals"
@@ -79,6 +81,16 @@ export default function App() {
                 element={<ProtectedRoute allowedRoles={['cxp']}>{W(DashbordCxp)}</ProtectedRoute>}
               />
 
+*              {/* ── Profile — all roles ── */}
+              <Route path="/sales-leader/profile"
+                element={<ProtectedRoute allowedRoles={['sales_leader']}>{W(ProfilePage)}</ProtectedRoute>}
+              />
+              <Route path="/salesman/profile"
+                element={<ProtectedRoute allowedRoles={['salesman']}>{W(ProfilePage)}</ProtectedRoute>}
+              />
+              <Route path="/cxp/profile"
+                element={<ProtectedRoute allowedRoles={['cxp']}>{W(ProfilePage)}</ProtectedRoute>}
+              />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </SocketProvider>

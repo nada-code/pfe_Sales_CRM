@@ -1,15 +1,16 @@
 import { useNavigate } from "react-router-dom";
 import { fullName,  acolor, av2 } from "../../utils/leadsUtils";
 import { Av, StatusBadge, SourceBadge } from "../UI";
+import { STATUS_CFG } from "../../config/leadsConfig";
 
 const NOTE_PREVIEW = 55; // chars shown inline
 
-export default function TableView({ leads, onAssignClick }) {
+export default function TableView({ leads, onAssignClick, onStatusChange, basePath = "/sales-leader/leads" }) {
   const navigate = useNavigate();
 
-  const goTo      = (id)  => navigate(`/sales-leader/leads/${id}`);
-  const goToNotes = (id)  => navigate(`/sales-leader/leads/${id}?tab=notes`);
-  const shortId = (id) => String(id).slice(-6).toUpperCase();
+  const goTo      = (id) => navigate(`${basePath}/${id}`);
+  const goToNotes = (id) => navigate(`${basePath}/${id}?tab=notes`);
+ const shortId = (id) => String(id).slice(-6).toUpperCase();
 
   return (
     <div className="table-wrap">
@@ -49,8 +50,26 @@ export default function TableView({ leads, onAssignClick }) {
 
                 <td><span className="table-contact-phone">{l.phone || "—"}</span></td>
                 <td><SourceBadge source={l.source} /></td>
-                <td><StatusBadge status={l.status} /></td>
-
+<td onClick={(e) => onStatusChange && e.stopPropagation()}>
+    {onStatusChange ? (
+      <select
+        className="sm-status-select"
+        value={l.status}
+        style={{
+          color:       STATUS_CFG[l.status]?.color,
+          background:  STATUS_CFG[l.status]?.light,
+          borderColor: STATUS_CFG[l.status]?.color + "55",
+        }}
+        onChange={(e) => onStatusChange(l._id, e.target.value, e)}
+      >
+        {Object.entries(STATUS_CFG).map(([k, v]) => (
+          <option key={k} value={k}>{v.label}</option>
+        ))}
+      </select>
+    ) : (
+      <StatusBadge status={l.status} />
+    )}
+  </td>
                 <td onClick={(e) => e.stopPropagation()}>
                   <div className="table-assigned">
                     {l.assignedTo ? (
