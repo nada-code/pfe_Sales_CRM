@@ -1,16 +1,17 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { fetchLeads, fetchStats, changeStatus } from '../../api/leadsApi';
-import { useSocket } from '../../context/SocketContext';
+import { useSocket } from '../../context/Socketcontext';
 import LeadCard     from '../../components/leads/LeadCard';
 import TableView    from '../../components/leads/TableView';
 import { STATUS_CFG, SOURCE_CFG, PAGE_SIZE } from '../../config/leadsConfig';
 import { Spinner, Toast, SourceBadge } from '../../components/UI';
 import Pagination from '../../components/leads/Pagination';
+import { RefreshCw, Search, LayoutGrid, List, AlertCircle } from 'lucide-react';
 import '../../styles/leads.css';
-import '../../styles/SalesmanLeads.css';
+import '../../styles/LeadsManagementStyles.css';
 
 export default function MyLeads() {
-  const socket   = useSocket();
+  const socket = useSocket();
 
   const [leads,        setLeads]        = useState([]);
   const [stats,        setStats]        = useState({ byStatus: [] });
@@ -22,6 +23,7 @@ export default function MyLeads() {
   const [search,       setSearch]       = useState('');
   const [searchInput,  setSearchInput]  = useState('');
   const [filterStatus, setFilterStatus] = useState('');
+  const [filterSource, setFilterSource] = useState('');
   const [view,         setView]         = useState('table');
   const [toast,        setToast]        = useState(null);
   const debounceTimer = useRef(null);
@@ -35,6 +37,7 @@ export default function MyLeads() {
         page, limit: PAGE_SIZE,
         ...(search       && { search }),
         ...(filterStatus && { status: filterStatus }),
+        ...(filterSource && { source: filterSource }),
       };
       const [leadsRes, statsRes] = await Promise.all([fetchLeads(params), fetchStats()]);
       setLeads(leadsRes.data  || []);
@@ -46,7 +49,7 @@ export default function MyLeads() {
     } finally {
       if (!silent) setLoading(false);
     }
-  }, [page, search, filterStatus]);
+  }, [page, search, filterStatus, filterSource]);
 
   loadRef.current = load;
 
@@ -69,8 +72,7 @@ export default function MyLeads() {
   }, [socket]);
 
   // ── Search debounce ────────────────────────────────────────────────────────
-  function handleSearchInput(e) {
-    const val = e.target.value;
+  function handleSearchInput(val) {
     setSearchInput(val);
     clearTimeout(debounceTimer.current);
     debounceTimer.current = setTimeout(() => { setSearch(val); setPage(1); }, 400);
@@ -82,106 +84,169 @@ export default function MyLeads() {
     try {
       await changeStatus(leadId, newStatus);
     } catch (err) {
-      setToast({ type: "error", message: err?.response?.data?.message || "Failed to update status" });
+      setToast({ type: 'error', message: err?.response?.data?.message || 'Failed to update status' });
     }
   }
+
   const statsMap = Object.fromEntries((stats.byStatus || []).map((s) => [s._id, s.count]));
 
   return (
-    <div className="leads-root">
+    <div className="lm-root">
 
-      <div className="leads-header">
+      {/* ── Header ── */}
+      <div className="lm-header">
         <div>
-          <h1 className="leads-header__title">My Leads</h1>
-          <p className="leads-header__subtitle">{total} leads assigned to you</p>
+          <h1 className="sd-title">My Leads</h1>
+          <p className={`lm-subtitle${error ? ' lm-subtitle--danger' : ''}`}>
+            {error ? `⚠ ${error}` : `${total} leads assigned to you`}
+          </p>
+        </div>
+        <div className="lm-header__actions">
+          <button
+            className="lm-btn lm-btn--ghost"
+            onClick={() => load()}
+            disabled={loading}
+          >
+            <RefreshCw size={14} className={loading ? 'lm-spin' : ''} />
+            {loading ? 'Chargement…' : 'Actualiser'}
+          </button>
         </div>
       </div>
 
-      {/* Stats bar */}
-      <div className="leads-stats-bar">
-        {Object.entries(STATUS_CFG).map(([k, v]) => (
-          <div key={k} className="leads-stat-card"
-            style={{ borderLeft: `3px solid ${v.color}`, cursor: "pointer" }}
-            onClick={() => { setFilterStatus(filterStatus === k ? "" : k); setPage(1); }}>
-            <div className="leads-stat-card__count" style={{ color: v.color }}>{statsMap[k] ?? 0}</div>
-            <div className="leads-stat-card__label">{v.label}</div>
-          </div>
+      {/* ── Stats bar ── */}
+      <div className="lm-stats">
+        {Object.entries(STATUS_CFG).map(([k, v], i) => (
+          <button
+            key={k}
+            className={`lm-stat-card${filterStatus === k ? ' lm-stat-card--active' : ''}`}
+            style={{ '--sc': v.color, '--sl': v.light, animationDelay: `${i * 55}ms` }}
+            onClick={() => { setFilterStatus(filterStatus === k ? '' : k); setPage(1); }}
+          >
+            <div className="lm-stat-card__top">
+              <span className="lm-stat-dot" style={{ background: v.color }} />
+              <span className="lm-stat-label">{v.label}</span>
+            </div>
+            <p className="lm-stat-count" style={{ color: v.color }}>
+              {loading ? '—' : (statsMap[k] ?? 0)}
+            </p>
+            {filterStatus === k && (
+              <div className="lm-stat-card__bar" style={{ background: v.color }} />
+            )}
+          </button>
         ))}
       </div>
 
-      {/* Toolbar */}
-      <div className="leads-toolbar">
-        <div className="leads-search">
-          <span className="leads-search__icon">🔍</span>
-          <input className="leads-search__input" placeholder="Search by name, email, phone…"
+      {/* ── Toolbar ── */}
+      <div className="lm-toolbar">
+        <div className="lm-search">
+          <Search size={14} className="lm-search__icon" />
+          <input
+            className="lm-search__input"
+            placeholder="Search by name, email, phone…"
             value={searchInput}
-            onChange={(e) => { setSearchInput(e.target.value); handleSearchInput(e.target.value); }} />
+            onChange={(e) => handleSearchInput(e.target.value)}
+          />
           {searchInput && (
-            <button className="leads-search__clear"
-              onClick={() => { setSearchInput(""); setSearch(""); setPage(1); }}>✕</button>
+            <button className="lm-search__clear"
+              onClick={() => { setSearchInput(''); setSearch(''); setPage(1); }}>✕</button>
           )}
         </div>
-        <select className="leads-filter-select" value={filterStatus}
-          onChange={(e) => { setFilterStatus(e.target.value); setPage(1); }}>
+
+        <select
+          className="lm-filter-select"
+          value={filterStatus}
+          onChange={(e) => { setFilterStatus(e.target.value); setPage(1); }}
+        >
           <option value="">All Statuses</option>
-          {Object.entries(STATUS_CFG).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+          {Object.entries(STATUS_CFG).map(([k, v]) => (
+            <option key={k} value={k}>{v.label}</option>
+          ))}
         </select>
-        <div className="leads-view-switcher">
-          {[{ k: "table", icon: "≡" }, { k: "cards", icon: "⊞" }].map((v) => (
-            <button key={v.k}
-              className={`leads-view-switcher__btn${view === v.k ? " leads-view-switcher__btn--active" : ""}`}
-              onClick={() => setView(v.k)}>{v.icon}
-            </button>
+
+        <select
+          className="lm-filter-select"
+          value={filterSource}
+          onChange={(e) => { setFilterSource(e.target.value); setPage(1); }}
+        >
+          <option value="">All Sources</option>
+          {Object.entries(SOURCE_CFG).map(([k, v]) => (
+            <option key={k} value={k}>{v.label}</option>
           ))}
+        </select>
+
+        <div className="lm-view-toggle">
+          <button
+            className={`lm-view-btn${view === 'table' ? ' active' : ''}`}
+            onClick={() => setView('table')} title="Vue tableau"
+          >
+            <List size={15} />
+          </button>
+          <button
+            className={`lm-view-btn${view === 'cards' ? ' active' : ''}`}
+            onClick={() => setView('cards')} title="Vue cartes"
+          >
+            <LayoutGrid size={15} />
+          </button>
         </div>
       </div>
 
-      <div className="leads-count">
+      {/* ── Count ── */}
+      <div className="lm-count">
         {loading && <Spinner size={12} />}
-        Showing {leads.length} of {total} leads
-        {filterStatus && ` · ${STATUS_CFG[filterStatus]?.label}`}
+        <span>
+          {leads.length} / {total} leads
+          {filterStatus && ` · ${STATUS_CFG[filterStatus]?.label}`}
+        </span>
       </div>
 
+      {/* ── Error ── */}
       {error && (
-        <div className="leads-error-banner">⚠ {error}
-          <button className="leads-error-banner__retry" onClick={() => load()}>Retry</button>
+        <div className="lm-error">
+          <AlertCircle size={14} /> {error}
+          <button className="lm-error__retry" onClick={() => load()}>Réessayer</button>
         </div>
       )}
 
+      {/* ── Skeletons ── */}
       {loading && leads.length === 0 && (
-        <div className="leads-skeleton-grid">
+        <div className="lm-skel-grid">
           {[1,2,3,4,5,6].map((i) => (
-            <div key={i} className="leads-skeleton-card"><div className="leads-skeleton-card__bar" /></div>
+            <div key={i} className="lm-skel-card">
+              <div className="lm-skel-bar" />
+              <div className="lm-skel-line lm-skel-line--w60" />
+              <div className="lm-skel-line lm-skel-line--w40" />
+            </div>
           ))}
         </div>
       )}
 
+      {/* ── Content ── */}
       {(!loading || leads.length > 0) && (
         <>
-          {view === "cards" && (
-                      <div className="leads-cards-grid">
-                        {leads.map((l) => (
-      <LeadCard key={l._id} lead={l} basePath="/salesman/leads" />
-    ))}
-                        {leads.length === 0 && !loading && (
-                          <div className="leads-empty">
-                            <div className="leads-empty__icon">🔍</div>
-                            <div className="leads-empty__title">No leads found</div>
-                            <div className="leads-empty__hint">Try adjusting your filters</div>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                    {view === "table" && (
-  <TableView
-    leads={leads}
-    basePath="/salesman/leads"
-    onStatusChange={handleStatusChange}
-  />
-)}
-                    <Pagination page={page} pages={pages} total={total} onPage={setPage} />
-            
-                   
+          {view === 'cards' && (
+            <div className="leads-cards-grid">
+              {leads.map((l) => (
+                <LeadCard key={l._id} lead={l} basePath="/salesman/leads" />
+              ))}
+              {leads.length === 0 && !loading && (
+                <div className="lm-empty">
+                  <div className="lm-empty__icon">🔍</div>
+                  <p className="lm-empty__title">No leads found</p>
+                  <p className="lm-empty__hint">Try adjusting your filters</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {view === 'table' && (
+            <TableView
+              leads={leads}
+              basePath="/salesman/leads"
+              onStatusChange={handleStatusChange}
+            />
+          )}
+
+          <Pagination page={page} pages={pages} total={total} onPage={setPage} />
         </>
       )}
 

@@ -24,4 +24,5 @@ router.put('/:id/assign', protect, authorize('sales_leader'), ctrl.assignLead);
 router.put('/:id/status', protect, authorize('sales_leader', 'CXP', 'salesman'), ctrl.changeStatus);
 router.post('/:id/note',  protect, authorize('sales_leader', 'CXP', 'salesman'), ctrl.addNote);
 
+
 module.exports = router;

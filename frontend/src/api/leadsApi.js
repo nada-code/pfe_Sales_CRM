@@ -12,3 +12,4 @@ export const addNote       = (id, content) => api.post(`/leads/${id}/note`, { co
 export const importLeads   = (arr)         => api.post('/leads/import', arr);
 export const fetchSalesmen = ()            => api.get('/users', { params: { role: 'salesman', isApproved: true } });
 export const fetchTeam = ()            => api.get('/users/team');
+

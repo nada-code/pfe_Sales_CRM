@@ -1,125 +1,189 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'react-toastify';
 import { getUsers, approveUser } from '../../api/authApi';
+import { useSocket } from '../../context/Socketcontext';
+import { CheckCircle2, Clock, RefreshCw, Users, AlertCircle } from 'lucide-react';
 import '../../styles/ApprovalsStyles.css';
 
-const Approvals = () => {
-  const [salesmen, setSalesmen]   = useState([]);
-  const [loading, setLoading]     = useState(true);
-  const [approving, setApproving] = useState(null);
+const formatDate = (iso) =>
+  iso ? new Date(iso).toLocaleDateString('fr-FR', { year: 'numeric', month: 'short', day: 'numeric' }) : '—';
 
-  /* ── Fetch pending salesmen ── */
-  const fetchPending = useCallback(async () => {
-    setLoading(true);
+const initials = (u) =>
+  `${u.firstName?.[0] ?? ''}${u.lastName?.[0] ?? ''}`.toUpperCase();
+
+const AVATAR_COLORS = [
+  'linear-gradient(135deg,#6366f1,#4f46e5)',
+  'linear-gradient(135deg,#0ea5e9,#0284c7)',
+  'linear-gradient(135deg,#10b981,#059669)',
+  'linear-gradient(135deg,#f59e0b,#d97706)',
+  'linear-gradient(135deg,#a855f7,#7c3aed)',
+];
+const avatarColor = (id) => AVATAR_COLORS[(id?.charCodeAt(id.length - 1) ?? 0) % AVATAR_COLORS.length];
+
+export default function Approvals() {
+  const socket = useSocket();
+
+  const [salesmen,  setSalesmen]  = useState([]);
+  const [loading,   setLoading]   = useState(true);
+  const [approving, setApproving] = useState(null);
+  const [approved,  setApproved]  = useState(new Set()); // for exit animation
+
+  const fetchPending = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
-      const response = await getUsers({ role: 'salesman', isApproved: false });
-      setSalesmen(response.data ?? []);
+      const res = await getUsers({ role: 'salesman', isApproved: false });
+      setSalesmen(res.data ?? []);
     } catch {
-      toast.error('Failed to load pending accounts');
+      toast.error('Impossible de charger les comptes en attente');
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, []);
 
   useEffect(() => { fetchPending(); }, [fetchPending]);
 
-  /* ── Approve action ── */
+  // Socket: refresh when a new user registers
+  useEffect(() => {
+    if (!socket) return;
+    const handler = () => fetchPending(true);
+    socket.on('user:registered', handler);
+    return () => socket.off('user:registered', handler);
+  }, [socket, fetchPending]);
+
   const handleApprove = async (userId) => {
     setApproving(userId);
     try {
       await approveUser(userId);
-      toast.success('Salesman approved successfully');
-      setSalesmen((prev) => prev.filter((u) => u._id !== userId));
+      toast.success('Compte approuvé ✓');
+      // animate out then remove
+      setApproved((prev) => new Set([...prev, userId]));
+      setTimeout(() => setSalesmen((prev) => prev.filter((u) => u._id !== userId)), 500);
     } catch (err) {
-      const message = err.response?.data?.message || 'Failed to approve user';
-      toast.error(message);
+      toast.error(err.response?.data?.message || 'Échec de l\'approbation');
     } finally {
       setApproving(null);
     }
   };
 
-  /* ── Helpers ── */
-  const formatDate = (iso) =>
-    iso
-      ? new Date(iso).toLocaleDateString('en-US', {
-          year: 'numeric', month: 'short', day: 'numeric',
-        })
-      : '-';
+  const Skel = () => (
+    <div className="ap-card ap-card--skel">
+      <div className="ap-skel-av" />
+      <div className="ap-skel-lines">
+        <div className="ap-skel-line ap-skel-line--w50" />
+        <div className="ap-skel-line ap-skel-line--w70" />
+        <div className="ap-skel-line ap-skel-line--w35" />
+      </div>
+      <div className="ap-skel-btn" />
+    </div>
+  );
 
-  const getInitials = (u) =>
-    `${u.firstName?.[0] ?? ''}${u.lastName?.[0] ?? ''}`.toUpperCase();
-
-  /* ── Render ── */
   return (
-    <div className="approvals-page">
+    <div className="ap-root">
 
-      {/* Header */}
-      <div className="approvals-header">
-        <div>
-          <h1 className="approvals-title">Pending Approvals</h1>
-          <p className="approvals-subtitle">Review and approve new salesman accounts</p>
+      {/* ══ HEADER ══ */}
+      <div className="ap-header">
+        <div className="ap-header__left">
+          <h1 className="ap-title">Approbations</h1>
+          <p className="ap-subtitle">Valider les nouveaux comptes salesman</p>
         </div>
-        <span className="approvals-badge">{salesmen.length} pending</span>
+
+        <div className="ap-header__right">
+          <div className="ap-badge-count">
+            <Clock size={13} />
+            {loading ? '…' : salesmen.length} en attente
+          </div>
+          <button className="ap-refresh" onClick={() => fetchPending()} disabled={loading}>
+            <RefreshCw size={13} className={loading ? 'ap-spin' : ''} />
+          </button>
+        </div>
       </div>
 
-      {/* Loading */}
+      {/* ══ KPI strip ══ */}
+      <div className="ap-kpi-strip">
+        <div className="ap-kpi">
+          <div className="ap-kpi__icon ap-kpi__icon--amber"><Clock size={18} /></div>
+          <div>
+            <p className="ap-kpi__value">{loading ? '—' : salesmen.length}</p>
+            <p className="ap-kpi__label">En attente</p>
+          </div>
+        </div>
+        <div className="ap-kpi">
+          <div className="ap-kpi__icon ap-kpi__icon--emerald"><CheckCircle2 size={18} /></div>
+          <div>
+            <p className="ap-kpi__value">{approved.size}</p>
+            <p className="ap-kpi__label">Approuvés (session)</p>
+          </div>
+        </div>
+        <div className="ap-kpi">
+          <div className="ap-kpi__icon ap-kpi__icon--indigo"><Users size={18} /></div>
+          <div>
+            <p className="ap-kpi__value">{loading ? '—' : salesmen.length + approved.size}</p>
+            <p className="ap-kpi__label">Total traités</p>
+          </div>
+        </div>
+      </div>
+
+      {/* ══ CONTENT ══ */}
       {loading ? (
-        <div className="approvals-centered">
-          <div className="approvals-spinner" />
-          <p>Loading pending accounts…</p>
+        <div className="ap-list">
+          {[1,2,3].map((i) => <Skel key={i} />)}
         </div>
 
       ) : salesmen.length === 0 ? (
-
-        /* Empty state */
-        <div className="approvals-empty">
-          <div className="approvals-empty-icon">✅</div>
-          <h3 className="approvals-empty-title">All caught up!</h3>
-          <p className="approvals-empty-text">No salesman accounts are waiting for approval.</p>
+        <div className="ap-empty">
+          <div className="ap-empty__circle">
+            <CheckCircle2 size={32} strokeWidth={1.5} />
+          </div>
+          <h3 className="ap-empty__title">Tout est à jour !</h3>
+          <p className="ap-empty__text">Aucun compte en attente d'approbation.</p>
         </div>
 
       ) : (
+        <div className="ap-list">
+          {salesmen.map((user, i) => (
+            <div
+              key={user._id}
+              className={`ap-card${approved.has(user._id) ? ' ap-card--leaving' : ''}`}
+              style={{ animationDelay: `${i * 60}ms` }}
+            >
+              {/* shimmer */}
+              <div className="ap-card__shimmer" />
 
-        /* List */
-        <div className="approvals-list">
-          {salesmen.map((user) => (
-            <div key={user._id} className="approvals-card">
-
-              {/* Left: avatar + info */}
-              <div className="approvals-card-left">
-                <div className="approvals-avatar">{getInitials(user)}</div>
-                <div>
-                  <p className="approvals-name">{user.firstName} {user.lastName}</p>
-                  <p className="approvals-email">{user.email}</p>
-                  <p className="approvals-date">Registered on {formatDate(user.createdAt)}</p>
-                </div>
+              {/* Avatar */}
+              <div className="ap-avatar" style={{ background: avatarColor(user._id) }}>
+                {initials(user)}
               </div>
 
-              {/* Right: badge + approve button */}
-              <div className="approvals-card-right">
-                <span className="approvals-role-badge">Salesman</span>
+              {/* Info */}
+              <div className="ap-info">
+                <p className="ap-info__name">{user.firstName} {user.lastName}</p>
+                <p className="ap-info__email">{user.email}</p>
+                <p className="ap-info__date">
+                  <Clock size={10} /> Inscrit le {formatDate(user.createdAt)}
+                </p>
+              </div>
+
+              {/* Right */}
+              <div className="ap-card__right">
+                <span className="ap-role-badge">Salesman</span>
                 <button
-                  className="approvals-btn"
+                  className="ap-approve-btn"
                   onClick={() => handleApprove(user._id)}
                   disabled={approving === user._id}
                 >
                   {approving === user._id ? (
-                    <span className="approvals-btn-dots">
+                    <span className="ap-dots">
                       <span /><span /><span />
                     </span>
                   ) : (
-                    'Approve'
+                    <><CheckCircle2 size={14} /> Approuver</>
                   )}
                 </button>
               </div>
-
             </div>
           ))}
         </div>
       )}
-
     </div>
   );
-};
-
-export default Approvals;
+}

@@ -19,9 +19,14 @@ import SalesLeaderTeam      from './pages/sales-leader/leadsManagement';
 import SalesLeaderApprovals from './pages/sales-leader/Approvals';
 import LeadDetailPage       from './pages/sales-leader/LeadDetailPage';
 
+
 // ── Salesman pages ───────────────────────────────────────────────────────────
 import MyLeads      from './pages/salesman/MyLeads';
 import LeadWorkPage from './pages/salesman/LeadWorkPage';
+import SalesmanDashboard from './pages/salesman/SalesmanDashboard';
+import Agenda       from './pages/salesman/Agenda';
+import PerformanceSalesman  from './pages/salesman/Performance';
+
 
 // ── CXP pages ────────────────────────────────────────────────────────────────
 import DashbordCxp from './pages/Cxp/DashbordCxp';
@@ -64,16 +69,21 @@ export default function App() {
               <Route path="/sales-leader/leads/:id"
                 element={<ProtectedRoute allowedRoles={['sales_leader']}>{W(LeadDetailPage)}</ProtectedRoute>}
               />
+              
 
               {/* ── Salesman ── */}
-              <Route path="/salesman/dashboard"
-                element={<ProtectedRoute allowedRoles={['salesman']}>{W(MyLeads)}</ProtectedRoute>}
-              />
+              <Route path="/salesman/dashboard" element={<ProtectedRoute allowedRoles={['salesman']}>{W(SalesmanDashboard)}</ProtectedRoute>} />
               <Route path="/salesman/prospects"
                 element={<ProtectedRoute allowedRoles={['salesman']}>{W(MyLeads)}</ProtectedRoute>}
               />
               <Route path="/salesman/leads/:id"
                 element={<ProtectedRoute allowedRoles={['salesman']}>{W(LeadWorkPage)}</ProtectedRoute>}
+              />
+              <Route path="/salesman/agenda"
+                element={<ProtectedRoute allowedRoles={['salesman']}>{W(Agenda)}</ProtectedRoute>}
+              />
+              <Route path="/salesman/performance"
+                element={<ProtectedRoute allowedRoles={['salesman']}>{W(PerformanceSalesman)}</ProtectedRoute>}
               />
 
               {/* ── CXP ── */}

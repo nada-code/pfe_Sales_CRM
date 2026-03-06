@@ -9,7 +9,10 @@ import Pagination   from '../../components/leads/Pagination';
 import NewLeadModal from '../../components/modals/NewLeadModal';
 import AssignModal  from '../../components/modals/AssignModal';
 import ImportModal  from '../../components/modals/ImportModal';
-import '../../styles/leads.css';
+import { Upload, Plus, RefreshCw, Search, LayoutGrid, List, AlertCircle } from "lucide-react";
+
+import "../../styles/leads.css";
+import "../../styles/LeadsManagementStyles.css";
 
 export default function LeadsManagement() {
   const {
@@ -45,44 +48,58 @@ export default function LeadsManagement() {
   }
 
   return (
-    <div className="leads-root">
+    <div className="lm-root">
 
       {/* Header */}
-      <div className="leads-header">
-        <div>
-          <h1 className="leads-header__title">Leads Management</h1>
-          <p className={`leads-header__subtitle${error ? " leads-header__subtitle--danger" : ""}`}>
-            {error ? `Error: ${error}` : `${total} leads total`}
+      <div className="lm-header">
+        <div className="lm-header__left">
+          <h1 className="lm-title">Leads Management</h1>
+          <p className={`lm-subtitle${error ? " lm-subtitle--danger" : ""}`}>
+            {error ? `⚠ ${error}` : `${total} leads au total`}
           </p>
         </div>
-        <div className="leads-header__actions">
+        <div className="lm-header__actions">
+          {/* ── Actualiser ── */}
+          <button className="lm-btn lm-btn--ghost" onClick={reload} disabled={loading}>
+            <RefreshCw size={14} className={loading ? "lm-spin" : ""} />
+            Actualiser
+          </button>
           <button className="btn-cancel" onClick={() => setImportModal(true)}>⬆ Import</button>
           <button className="btn-primary" onClick={() => setNewLeadModal(true)}>+ New Lead</button>
         </div>
       </div>
 
-      {/* Stats bar */}
-      <div className="leads-stats-bar">
-        {Object.entries(STATUS_CFG).map(([k, v]) => (
-          <div key={k} className="leads-stat-card"
-            style={{ borderLeft: `3px solid ${v.color}` }}
-            onClick={() => setFilterStatus(filterStatus === k ? "" : k)}>
-            <div className="leads-stat-card__count" style={{ color: v.color }}>{statsMap[k] ?? 0}</div>
-            <div className="leads-stat-card__label">{v.label}</div>
-          </div>
+      {/* ══ STATS BAR ══ */}
+      <div className="lm-stats">
+        {Object.entries(STATUS_CFG).map(([k, v], i) => (
+          <button
+            key={k}
+            className={`lm-stat-card${filterStatus === k ? " lm-stat-card--active" : ""}`}
+            style={{ "--sc": v.color, "--sl": v.light, animationDelay: `${i * 55}ms` }}
+            onClick={() => setFilterStatus(filterStatus === k ? "" : k)}
+          >
+            <div className="lm-stat-card__top">
+              <span className="lm-stat-dot" style={{ background: v.dot || v.color }} />
+              <span className="lm-stat-label">{v.label}</span>
+            </div>
+            <p className="lm-stat-count" style={{ color: v.color }}>
+              {loading ? "—" : (statsMap[k] ?? 0)}
+            </p>
+            {filterStatus === k && <div className="lm-stat-card__bar" style={{ background: v.color }} />}
+          </button>
         ))}
       </div>
 
       {/* Toolbar */}
-      <div className="leads-toolbar">
-        <div className="leads-search">
-          <span className="leads-search__icon">🔍</span>
-          <input className="leads-search__input" placeholder="Search by name, email, phone…"
+      <div className="lm-toolbar">
+        <div className="lm-search">
+          <span className="lm-search__icon">🔍</span>
+          <input className="lm-search__input" placeholder="Search by name, email, phone…"
             value={searchInput}
             onChange={(e) => { setSearchInput(e.target.value); debouncedSearch(e.target.value); }}
           />
           {searchInput && (
-            <button className="leads-search__clear"
+            <button className="lm-search__clear"
               onClick={() => { setSearchInput(""); debouncedSearch(""); }}>✕</button>
           )}
         </div>
@@ -97,46 +114,60 @@ export default function LeadsManagement() {
           )}
         </button>
 
-        <select className="leads-filter-select" value={filterStatus}
+        <select className="lm-filter-select" value={filterStatus}
           onChange={(e) => setFilterStatus(e.target.value)}>
           <option value="">All Statuses</option>
           {Object.entries(STATUS_CFG).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
         </select>
 
-        <select className="leads-filter-select" value={filterSource}
+        <select className="lm-filter-select" value={filterSource}
           onChange={(e) => setFilterSource(e.target.value)}>
           <option value="">All Sources</option>
           {Object.entries(SOURCE_CFG).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
         </select>
 
-        <div className="leads-view-switcher">
-          {[{ k: "table", icon: "≡" }, { k: "cards", icon: "⊞" }].map((v) => (
-            <button key={v.k}
-              className={`leads-view-switcher__btn${view === v.k ? " leads-view-switcher__btn--active" : ""}`}
-              onClick={() => setView(v.k)}>{v.icon}
-            </button>
-          ))}
+        <div className="lm-view-toggle">
+          <button
+            className={`lm-view-btn${view === "table" ? " active" : ""}`}
+            onClick={() => setView("table")} title="Vue tableau"
+          >
+            <List size={15} />
+          </button>
+          <button
+            className={`lm-view-btn${view === "cards" ? " active" : ""}`}
+            onClick={() => setView("cards")} title="Vue cartes"
+          >
+            <LayoutGrid size={15} />
+          </button>
         </div>
       </div>
 
       {/* Count */}
-      <div className="leads-count">
+      <div className="lm-count">
         {loading && <Spinner size={12} />}
         Showing {leads.length} of {total} leads
         {filterStatus && ` · ${STATUS_CFG[filterStatus]?.label}`}
         {filterSource && ` · ${SOURCE_CFG[filterSource]?.label}`}
       </div>
 
+      
+      {/* ══ ERROR ══ */}
       {error && (
-        <div className="leads-error-banner">⚠ {error}
-          <button className="leads-error-banner__retry" onClick={reload}>Retry</button>
+        <div className="lm-error">
+          <AlertCircle size={14} /> {error}
+          <button className="lm-error__retry" onClick={reload}>Réessayer</button>
         </div>
       )}
 
+      {/* ══ SKELETONS ══ */}
       {loading && leads.length === 0 && (
-        <div className="leads-skeleton-grid">
+        <div className="lm-skel-grid">
           {[1,2,3,4,5,6].map((i) => (
-            <div key={i} className="leads-skeleton-card"><div className="leads-skeleton-card__bar" /></div>
+            <div key={i} className="lm-skel-card">
+              <div className="lm-skel-bar" />
+              <div className="lm-skel-line lm-skel-line--w60" />
+              <div className="lm-skel-line lm-skel-line--w40" />
+            </div>
           ))}
         </div>
       )}
@@ -149,10 +180,10 @@ export default function LeadsManagement() {
                 <LeadCard key={l._id} lead={l} onAssignClick={setAssignModal} />
               ))}
               {leads.length === 0 && !loading && (
-                <div className="leads-empty">
-                  <div className="leads-empty__icon">🔍</div>
-                  <div className="leads-empty__title">No leads found</div>
-                  <div className="leads-empty__hint">Try adjusting your filters</div>
+                <div className="lm-empty">
+                  <div className="lm-empty__icon">🔍</div>
+                  <p className="lm-empty__title">Aucun lead trouvé</p>
+                  <p className="lm-empty__hint">Essayez d'ajuster vos filtres</p>
                 </div>
               )}
             </div>
@@ -174,14 +205,12 @@ export default function LeadsManagement() {
         />
       )}
       {assignModal && (
-        <AssignModal lead={assignModal} onClose={() => setAssignModal(null)} onAssign={handleAssign} 
-          
-        />
+        <AssignModal lead={assignModal} onClose={() => setAssignModal(null)} onAssign={handleAssign} />
       )}
       {importModal && (
         <ImportModal
           onClose={() => setImportModal(false)}
-          onCompleted={() => { reload(); showToast("Import completed!"); }} // ✅
+          onCompleted={() => { reload(); showToast("Import completed!"); }}
         />
       )}
 
