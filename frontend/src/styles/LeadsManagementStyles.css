@@ -253,6 +253,6 @@
   .lm-header { flex-direction: column; }
   .lm-stats  { gap: 8px; }
   .lm-stat-card { min-width: 90px; padding: 10px 12px; }
-  .lm-toolbar { flex-direction: column; align-items: stretch; }
+  /* .lm-toolbar { flex-direction: column; align-items: stretch; } */
   .lm-search  { width: 100%; }
 }

@@ -3,12 +3,10 @@ import { useNavigate, useLocation, Link } from 'react-router-dom';
 import {
   Bell, LogOut, X, ChevronRight,
   Mail, Shield, User, Menu, Check,
-  Calendar, Phone, ExternalLink,
+  Calendar, Phone, Settings,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { ROLE_NAV, ROLE_THEME } from '../config/roleConfig';
-// import '../styles/DashboardLayout.css';
-import './DashboardLayout.css';
 import '../styles/global.css';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -24,47 +22,58 @@ const cssVars = (t) => ({
   '--role-light':        t.light,
   '--role-badge':        t.badge,
   '--role-shadow':       t.shadow ?? 'rgba(99,102,241,0.3)',
-  '--role-accent-faint': t.accent + '44',
+  '--role-accent-faint': t.accent + '22',
 });
 
 // ─── Mock notifications ───────────────────────────────────────────────────────
 const MOCK_NOTIFS = [
-  { id: 1, title: 'Nouveau prospect assigné',        sub: 'il y a 3 min',  read: false },
-  { id: 2, title: 'Rapport mensuel disponible',       sub: 'il y a 40 min', read: false },
-  { id: 3, title: 'Objectif mensuel atteint à 90 %', sub: 'Hier, 17h30',   read: true  },
-  { id: 4, title: 'Mise à jour système effectuée',   sub: 'Hier, 09h00',   read: true  },
+  { id: 1, title: 'Nouveau prospect assigné',        sub: 'il y a 3 min',  read: false, color: '#6366f1' },
+  { id: 2, title: 'Rapport mensuel disponible',       sub: 'il y a 40 min', read: false, color: '#f59e0b' },
+  { id: 3, title: 'Objectif mensuel atteint à 90 %', sub: 'Hier, 17h30',   read: true,  color: '#10b981' },
+  { id: 4, title: 'Mise à jour système effectuée',   sub: 'Hier, 09h00',   read: true,  color: '#64748b' },
 ];
 
 // ════════════════════════════════════════════════════════════════════════════
 // NOTIFICATIONS DROPDOWN
 // ════════════════════════════════════════════════════════════════════════════
 function NotifDropdown({ notifs, onMarkAll }) {
+  const unread = notifs.filter((n) => !n.read).length;
   return (
     <div className="notif-dropdown">
       <div className="notif-header">
         <div className="notif-title-row">
           <p className="notif-title">Notifications</p>
-          <span className="notif-count">{notifs.filter(n => !n.read).length}</span>
+          {unread > 0 && <span className="notif-count">{unread}</span>}
         </div>
-        <button className="notif-mark-all" onClick={onMarkAll}>
-          <Check size={12} /> Tout lire
-        </button>
+        {unread > 0 && (
+          <button className="notif-mark-all" onClick={onMarkAll}>
+            <Check size={11} /> Tout lire
+          </button>
+        )}
       </div>
-      {notifs.map((n) => (
-        <div key={n.id} className={`notif-item${n.read ? '' : ' unread'}`}>
-          <div className="notif-dot-indicator" style={{ background: n.read ? '#e2e8f0' : '#6366f1' }} />
-          <div>
-            <p className={`notif-item-title${n.read ? '' : ' bold'}`}>{n.title}</p>
-            <p className="notif-item-time">{n.sub}</p>
+
+      <div className="notif-list">
+        {notifs.map((n) => (
+          <div key={n.id} className={`notif-item${n.read ? '' : ' unread'}`}>
+            <span className="notif-dot-indicator" style={{ background: n.read ? '#cbd5e1' : n.color }} />
+            <div className="notif-item-body">
+              <p className={`notif-item-title${n.read ? '' : ' bold'}`}>{n.title}</p>
+              <p className="notif-item-time">{n.sub}</p>
+            </div>
+            {!n.read && <span className="notif-unread-dot" style={{ background: n.color }} />}
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
+
+      <div className="notif-footer">
+        <button className="notif-footer-btn">Voir toutes les notifications →</button>
+      </div>
     </div>
   );
 }
 
 // ════════════════════════════════════════════════════════════════════════════
-// PROFILE MODAL  (quick view from avatar chip)
+// PROFILE MODAL
 // ════════════════════════════════════════════════════════════════════════════
 function ProfileModal({ user, theme, onClose, onNavigateToProfile }) {
   return (
@@ -73,24 +82,29 @@ function ProfileModal({ user, theme, onClose, onNavigateToProfile }) {
 
         {/* Gradient header */}
         <div className="modal-header">
-          <button className="modal-close" onClick={onClose}><X size={15} /></button>
-          <div className="modal-avatar-row">
+          <div className="modal-header-blob modal-header-blob--1" />
+          <div className="modal-header-blob modal-header-blob--2" />
+
+          <button className="modal-close" onClick={onClose}><X size={14} /></button>
+
+          <div className="modal-avatar-col">
             <div className="modal-avatar">
               {user.avatar
-                ? <img src={user.avatar} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 'inherit' }} />
-                : initials(user)}
+                ? <img src={user.avatar} alt="avatar" />
+                : <span className="modal-avatar-initials">{initials(user)}</span>}
+              <span className="modal-online-dot" />
             </div>
-            <div>
-              <p className="modal-user-name">{user.firstName} {user.lastName}</p>
-              <span className="modal-role-chip">
-                <span className="modal-role-chip-dot" />
-                {theme.label}
-              </span>
-            </div>
+            <p className="modal-user-name">{user.firstName} {user.lastName}</p>
+            <span className="modal-role-chip">
+              <span className="modal-role-chip-dot" />
+              {theme.label}
+            </span>
           </div>
+
+        
         </div>
 
-        {/* Info */}
+        {/* Info body */}
         <div className="modal-body">
           <p className="modal-section-label">Informations du compte</p>
           {[
@@ -101,7 +115,7 @@ function ProfileModal({ user, theme, onClose, onNavigateToProfile }) {
             { icon: <Calendar size={14} />, label: 'Membre depuis', value: formatDate(user.createdAt) },
           ].map(({ icon, label, value, highlight }) => (
             <div className="modal-info-row" key={label}>
-              <div className="modal-info-icon">{icon}</div>
+              <div className={`modal-info-icon${highlight ? ' modal-info-icon--highlight' : ''}`}>{icon}</div>
               <div className="modal-info-content">
                 <p className="modal-info-label">{label}</p>
                 <p className={`modal-info-value${highlight ? ' modal-info-value--highlight' : ''}`}>{value}</p>
@@ -110,11 +124,13 @@ function ProfileModal({ user, theme, onClose, onNavigateToProfile }) {
           ))}
         </div>
 
-        {/* Footer — navigate to full profile page */}
+        {/* Footer */}
         <div className="modal-actions">
-          <button className="modal-btn-secondary" onClick={onClose}>Fermer</button>
+          <button className="modal-btn-secondary" onClick={onClose}>
+            <LogOut size={14} /> Annuler
+          </button>
           <button className="modal-btn-primary" onClick={onNavigateToProfile}>
-            <ExternalLink size={14} /> Modifier le profil
+            <Settings size={14} /> Modifier le profil
           </button>
         </div>
       </div>
@@ -149,6 +165,7 @@ export default function DashboardLayout({ children }) {
   const { user, logout } = useAuth();
   const navigate         = useNavigate();
   const location         = useLocation();
+  const isProfileActive  = location.pathname.includes('/profile');
 
   const [showNotif,  setShowNotif]  = useState(false);
   const [showModal,  setShowModal]  = useState(false);
@@ -172,8 +189,6 @@ export default function DashboardLayout({ children }) {
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
-
-  // useEffect(() => { setMobileOpen(false); }, [location.pathname]);
 
   const handleLogout = async () => { await logout(); navigate('/login', { replace: true }); };
 
@@ -206,7 +221,10 @@ export default function DashboardLayout({ children }) {
             onClick={() => setCollapsed(!collapsed)}
             title={collapsed ? 'Expand' : 'Collapse'}
           >
-            <ChevronRight size={14} style={{ transform: collapsed ? 'rotate(0deg)' : 'rotate(180deg)', transition: 'transform .25s' }} />
+            <ChevronRight
+              size={14}
+              style={{ transform: collapsed ? 'rotate(0deg)' : 'rotate(180deg)', transition: 'transform .25s' }}
+            />
           </button>
         </div>
 
@@ -224,13 +242,14 @@ export default function DashboardLayout({ children }) {
 
         <div className="sidebar-footer">
           <button
-            className="sidebar-btn Profil"
+            className={`sidebar-btn${isProfileActive ? ' active' : ''}`}
             title={collapsed ? 'Profil' : undefined}
             onClick={handleNavigateToProfile}
           >
             <User size={16} strokeWidth={1.7} style={{ flexShrink: 0 }} />
             <span>Mon Profil</span>
           </button>
+
           <button
             className="sidebar-btn logout"
             title={collapsed ? 'Déconnexion' : undefined}
@@ -270,11 +289,10 @@ export default function DashboardLayout({ children }) {
 
             <div className="topbar-divider" />
 
-            {/* Avatar chip → opens quick modal */}
             <button className="avatar-chip" onClick={() => setShowModal(true)}>
               <div className="avatar-circle">
                 {user?.avatar
-                  ? <img src={user.avatar} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 'inherit' }} />
+                  ? <img src={user.avatar} alt="avatar" />
                   : initials(user)}
               </div>
               <div className="avatar-info">
@@ -288,7 +306,6 @@ export default function DashboardLayout({ children }) {
         <main className="page-content">{children}</main>
       </div>
 
-      {/* Quick profile modal */}
       {showModal && user && (
         <ProfileModal
           user={user}

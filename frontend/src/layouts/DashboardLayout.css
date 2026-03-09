@@ -14,9 +14,9 @@
 /* ════════════════════════════════════════════════════════════════
    SIDEBAR
 ════════════════════════════════════════════════════════════════ */
-.sidebar {
+/* .sidebar {
   width: var(--sidebar-width);
-  background: var(--sidebar-bg);
+  background-color: #161d28;
   display: flex;
   flex-direction: column;
   padding: 20px 13px;
@@ -29,7 +29,7 @@
 .sidebar.collapsed {
   width: var(--sidebar-collapsed);
   padding: 20px 10px;
-}
+} */
 
 /* ligne accent en haut */
 .sidebar::before {
@@ -309,7 +309,7 @@
 /* ════════════════════════════════════════════════════════════════
    RESPONSIVE
 ════════════════════════════════════════════════════════════════ */
-@media (max-width: 1024px) {
+/* @media (max-width: 1024px) {
   .sidebar { width: var(--sidebar-collapsed); padding: 20px 10px; }
   .sidebar-logo { justify-content: center; gap: 0; }
   .sidebar-logo-text, .role-badge, .nav-link span.label,
@@ -317,10 +317,10 @@
   .nav-link  { gap: 0; padding: 10px; justify-content: center; }
   .sidebar-btn { gap: 0; padding: 10px; justify-content: center; }
   .sidebar-collapse-btn { display: none; }
-}
+} */
 
-@media (max-width: 640px) {
-  .sidebar {
+ @media (max-width: 640px) {
+  /* .sidebar {
     position: fixed; top: 0; left: 0; bottom: 0; z-index: 50;
     width: var(--sidebar-width) !important;
     padding: 20px 13px !important;
@@ -331,14 +331,14 @@
   .sidebar.mobile-open { transform: translateX(0); }
   .sidebar-overlay { display: block; }
 
-  .sidebar.mobile-open .sidebar-logo { justify-content: flex-start; gap: 11px; }
-  .sidebar.mobile-open .sidebar-logo-text { display: block; }
+  .sidebar.mobile-open .sidebar-logo { justify-content: flex-start; gap: 5px; } */
+  /* .sidebar.mobile-open .sidebar-logo-text { display: block; }
   .sidebar.mobile-open .role-badge { display: block; }
   .sidebar.mobile-open .nav-link { gap: 10px; padding: 9px 12px; justify-content: flex-start; }
   .sidebar.mobile-open .nav-link span.label { display: inline; }
   .sidebar.mobile-open .sidebar-btn { gap: 10px; padding: 9px 12px; justify-content: flex-start; }
   .sidebar.mobile-open .sidebar-btn span { display: inline; }
-  .sidebar-collapse-btn { display: none; }
+  .sidebar-collapse-btn { display: none; } */
 
   .topbar-hamburger { display: flex; }
   .topbar { padding: 0 16px; height: 58px; }
@@ -351,4 +351,4 @@
 
 @media (max-width: 380px) {
   .topbar-app-name, .topbar-chevron { display: none; }
-}
+} 

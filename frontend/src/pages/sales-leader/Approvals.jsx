@@ -4,7 +4,6 @@ import { getUsers, approveUser, getSalesmanStats } from '../../api/authApi';
 import { useSocket } from '../../context/Socketcontext';
 import { CheckCircle2, Clock, RefreshCw, Users, AlertCircle } from 'lucide-react';
 import '../../styles/ApprovalsStyles.css';
-
 const formatDate = (iso) =>
   iso ? new Date(iso).toLocaleDateString('fr-FR', { year: 'numeric', month: 'short', day: 'numeric' }) : '—';
 

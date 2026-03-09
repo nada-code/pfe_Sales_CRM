@@ -7,7 +7,6 @@ import { fullName, fmtDate, fmtTime, acolor, av2 } from '../../utils/leadsUtils'
 import { Spinner } from '../../components/UI';
 import '../../styles/leads.css';
 import '../../styles/LeadDetail.css';
-import '../../styles/LeadHistory.css';
 
 const NOTES_PREVIEW = 2;
 const NOTE_TRUNCATE = 120;
