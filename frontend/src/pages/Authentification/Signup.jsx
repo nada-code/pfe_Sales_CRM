@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { signup } from '../../api/authApi';
 import { useAuth } from '../../context/AuthContext';
 import { ROLE_DEFAULT_ROUTE } from '../../config/roleConfig';
-import '../../styles/Auth.css';
+   import '../../styles/Auth.css'
 import { toast } from 'react-toastify';
 
 const ROLES = [
@@ -69,7 +69,7 @@ const Signup = () => {
             <h2>Account Pending Approval</h2>
             <p>
               Your salesman account has been created and is waiting for
-              approval from a sales leader.
+              approval from a sales leader Check your email.
             </p>
             <p className="pending-subtitle">
               You will be able to log in once your account has been approved.

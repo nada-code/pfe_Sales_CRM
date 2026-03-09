@@ -7,7 +7,9 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { ROLE_NAV, ROLE_THEME } from '../config/roleConfig';
+// import '../styles/DashboardLayout.css';
 import './DashboardLayout.css';
+import '../styles/global.css';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 const initials = (u) =>

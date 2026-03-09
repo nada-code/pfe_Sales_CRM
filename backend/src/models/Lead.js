@@ -65,6 +65,8 @@ const leadSchema = new mongoose.Schema(
     assignedAt: Date,
     assignedBy: mongoose.Schema.Types.ObjectId,
 
+    // Historique d'activités
+    
     // Notes et commentaires
     notes: [
       {

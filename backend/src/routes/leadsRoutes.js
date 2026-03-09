@@ -20,8 +20,10 @@ router.put('/:id', protect, authorize('sales_leader', 'salesman', 'CXP'), ctrl.u
 router.delete('/:id',     protect, authorize('sales_leader'), ctrl.deleteLead);
 router.put('/:id/assign', protect, authorize('sales_leader'), ctrl.assignLead);
 
+// Historique — tous rôles
+
 // Statut + Notes — sales_leader, salesman ET CXP
-router.put('/:id/status', protect, authorize('sales_leader', 'CXP', 'salesman'), ctrl.changeStatus);
+router.put('/:id/status', protect, authorize( 'CXP', 'salesman'), ctrl.changeStatus);
 router.post('/:id/note',  protect, authorize('sales_leader', 'CXP', 'salesman'), ctrl.addNote);
 
 

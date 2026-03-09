@@ -18,7 +18,6 @@ export const forgotPassword  = (data)         => api.post('/auth/forgot-password
 export const resetPassword   = (token, data)  => api.post(`/auth/reset-password/${token}`, data);
 export const getMe           = ()             => api.get('/auth/me');
 
-// ── Users (✅ URLs corrigées → /users au lieu de /auth) ──────
 export const getUsers = ({ role, isApproved } = {}) => {
   const params = new URLSearchParams();
   if (role       !== undefined) params.append('role', role);
@@ -26,4 +25,5 @@ export const getUsers = ({ role, isApproved } = {}) => {
   return api.get(`/users?${params.toString()}`);
 };
 
-export const approveUser = (userId) => api.put(`/users/${userId}/approve`);
+export const approveUser      = (userId) => api.put(`/users/${userId}/approve`);
+export const getSalesmanStats = ()       => api.get('/users/salesman-stats');

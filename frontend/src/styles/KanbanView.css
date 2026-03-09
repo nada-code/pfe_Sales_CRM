@@ -1,0 +1,304 @@
+/* ================================================================
+   KanbanView.css  — Vue Kanban des leads
+   Palette : cohérente avec LeadsManagementStyles.css (light SaaS)
+================================================================ */
+
+/* ── Root ─────────────────────────────────────────────────────── */
+.kb-root {
+  animation: kbIn .45s cubic-bezier(.16,1,.3,1) both;
+}
+@keyframes kbIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Board — horizontal scroll ───────────────────────────────── */
+.kb-board {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  padding-bottom: 16px;
+  align-items: flex-start;
+
+  /* Smooth scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: #e2e8f0 transparent;
+}
+.kb-board::-webkit-scrollbar        { height: 5px; }
+.kb-board::-webkit-scrollbar-thumb  { background: #e2e8f0; border-radius: 99px; }
+.kb-board::-webkit-scrollbar-track  { background: transparent; }
+
+/* ── Column ───────────────────────────────────────────────────── */
+.kb-col {
+  flex-shrink: 0;
+  width: 270px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-radius: 18px;
+  background: #f8fafc;
+  border: 1.5px solid #f1f5f9;
+  padding: 14px 12px 16px;
+  transition: background .2s, border-color .2s, box-shadow .2s;
+  min-height: 200px;
+}
+.kb-col--over {
+  background: color-mix(in srgb, var(--col-l, #eef2ff) 80%, white);
+  border-color: var(--col-c, #6366f1);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--col-c, #6366f1) 12%, transparent),
+              0 8px 24px rgba(0,0,0,.07);
+}
+.kb-col--src {
+  opacity: .75;
+}
+
+/* Column header */
+.kb-col__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-bottom: 10px;
+  border-bottom: 1.5px solid #f1f5f9;
+  margin-bottom: 4px;
+}
+.kb-col__label-row {
+  display: flex; align-items: center; gap: 7px;
+}
+.kb-col__dot {
+  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+}
+.kb-col__label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12.5px; font-weight: 800;
+  color: #334155;
+  letter-spacing: .02em;
+  text-transform: uppercase;
+}
+.kb-col__count {
+  font-family: 'Fraunces', serif;
+  font-size: 12px; font-weight: 900;
+  min-width: 24px; height: 22px;
+  padding: 0 7px;
+  border-radius: 99px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1.5px solid;
+}
+
+/* Drop indicator */
+.kb-drop-indicator {
+  display: flex; align-items: center; justify-content: center;
+  height: 42px;
+  border: 2px dashed var(--col-c, #6366f1);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--col-c, #6366f1) 6%, white);
+  color: var(--col-c, #6366f1);
+  font-size: 12px; font-weight: 700;
+  animation: kbDrop .25s cubic-bezier(.16,1,.3,1);
+}
+@keyframes kbDrop {
+  from { opacity: 0; transform: scaleY(.6); }
+  to   { opacity: 1; transform: scaleY(1); }
+}
+
+/* Cards container */
+.kb-col__cards {
+  display: flex; flex-direction: column; gap: 9px;
+}
+
+.kb-col__empty {
+  font-size: 12px; color: #cbd5e1;
+  text-align: center; padding: 20px 0;
+  font-style: italic;
+}
+
+/* ── Card ─────────────────────────────────────────────────────── */
+.kb-card {
+  position: relative;
+  background: #ffffff;
+  border-radius: 14px;
+  border: 1.5px solid #f1f5f9;
+  padding: 13px 13px 11px;
+  cursor: grab;
+  box-shadow: 0 2px 8px rgba(0,0,0,.045);
+  display: flex; flex-direction: column; gap: 8px;
+  animation: kbCardIn .38s cubic-bezier(.16,1,.3,1) both;
+  transition: transform .22s cubic-bezier(.16,1,.3,1),
+              box-shadow .22s, border-color .18s, opacity .18s;
+  overflow: hidden;
+  user-select: none;
+}
+@keyframes kbCardIn {
+  from { opacity: 0; transform: translateY(10px) scale(.97); }
+  to   { opacity: 1; transform: translateY(0)    scale(1); }
+}
+.kb-card:hover {
+  transform: translateY(-3px) scale(1.012);
+  box-shadow: 0 10px 28px rgba(0,0,0,.1), 0 2px 6px rgba(0,0,0,.06);
+  border-color: color-mix(in srgb, var(--col-c, #6366f1) 40%, transparent);
+  z-index: 2;
+}
+.kb-card:active {
+  cursor: grabbing;
+  transform: translateY(-2px) rotate(1.5deg) scale(1.03);
+  box-shadow: 0 18px 42px rgba(0,0,0,.16);
+  z-index: 10;
+}
+.kb-card--dragging {
+  opacity: .4;
+  transform: scale(.97);
+}
+
+/* Left accent strip */
+.kb-card__strip {
+  position: absolute;
+  left: 0; top: 10%; height: 80%; width: 3px;
+  border-radius: 0 3px 3px 0;
+  opacity: 0;
+  transition: opacity .22s, height .22s var(--ease);
+}
+.kb-card:hover .kb-card__strip { opacity: 1; }
+
+/* Header */
+.kb-card__head {
+  display: flex; align-items: center; gap: 9px;
+}
+.kb-card__av {
+  width: 34px; height: 34px; border-radius: 10px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Fraunces', serif;
+  font-size: 12px; font-weight: 700; color: #fff;
+  transition: transform .2s cubic-bezier(.16,1,.3,1);
+}
+.kb-card:hover .kb-card__av { transform: scale(1.08) rotate(-4deg); }
+
+.kb-card__meta { flex: 1; min-width: 0; }
+.kb-card__name {
+  font-size: 13.5px; font-weight: 700; color: #0f172a;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  margin: 0; line-height: 1.3;
+}
+.kb-card__id {
+  font-size: 10.5px; color: #94a3b8; font-weight: 500; margin: 1px 0 0;
+}
+
+.kb-card__drag-handle {
+  color: #cbd5e1; font-size: 15px; line-height: 1;
+  background: none; border: none; cursor: grab; padding: 2px 4px;
+  border-radius: 5px; flex-shrink: 0;
+  transition: color .15s, background .15s;
+}
+.kb-card__drag-handle:hover { color: #6366f1; background: #eef2ff; }
+
+/* Contact */
+.kb-card__contact {
+  font-size: 11.5px; color: #64748b; margin: 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* Note preview */
+.kb-card__note {
+  font-size: 11.5px; color: #475569;
+  background: #f8fafc;
+  border-left: 2px solid #c7d2fe;
+  padding: 5px 8px; border-radius: 0 6px 6px 0;
+  margin: 0; line-height: 1.4;
+  font-style: italic;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* Tags */
+.kb-card__tags {
+  display: flex; flex-wrap: wrap; gap: 5px;
+}
+.kb-tag {
+  font-size: 10.5px; font-weight: 600;
+  padding: 2px 7px; border-radius: 99px;
+  white-space: nowrap;
+}
+.kb-tag--source {
+  background: #eef2ff; color: #4f46e5;
+  border: 1px solid #c7d2fe;
+}
+.kb-tag--city {
+  background: #f0fdf4; color: #059669;
+  border: 1px solid #bbf7d0;
+}
+
+/* Footer */
+.kb-card__footer {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 8px;
+  border-top: 1px solid #f8fafc;
+  padding-top: 8px;
+  margin-top: 2px;
+}
+.kb-card__date { font-size: 11px; color: #94a3b8; font-weight: 500; }
+
+.kb-card__assignee {
+  width: 26px; height: 26px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9.5px; font-weight: 800; color: #fff;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 4px rgba(0,0,0,.15);
+  cursor: pointer; transition: transform .15s, box-shadow .15s;
+}
+.kb-card__assignee:hover {
+  transform: scale(1.15);
+  box-shadow: 0 3px 10px rgba(0,0,0,.22);
+}
+.kb-card__unassigned {
+  width: 26px; height: 26px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; color: #94a3b8;
+  background: #f1f5f9; border: 2px dashed #e2e8f0;
+  cursor: pointer; transition: all .15s;
+}
+.kb-card__unassigned:hover {
+  border-color: #6366f1; color: #6366f1; background: #eef2ff;
+}
+
+/* ── Empty board state ────────────────────────────────────────── */
+.kb-empty {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 8px; padding: 64px 24px; text-align: center;
+}
+.kb-empty__icon  { font-size: 38px; opacity: .35; }
+.kb-empty__title { font-size: 15px; font-weight: 700; color: #334155; margin: 0; }
+.kb-empty__hint  { font-size: 13px; color: #94a3b8; margin: 0; }
+
+/* ── Responsive ───────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .kb-col { width: 240px; }
+}
+
+/* ── Read-only mode ───────────────────────────────────────────── */
+.kb-readonly-banner {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 16px;
+  border-radius: 12px;
+  background: #fefce8;
+  border: 1.5px solid #fde68a;
+  color: #92400e;
+  font-size: 12.5px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  animation: kbIn .35s cubic-bezier(.16,1,.3,1) both;
+}
+.kb-readonly-banner__icon { font-size: 15px; flex-shrink: 0; }
+
+.kb-card--readonly {
+  cursor: default;
+}
+.kb-card--readonly:active {
+  cursor: default;
+  transform: translateY(-3px) scale(1.012);  /* same as hover, no rotation */
+  box-shadow: 0 10px 28px rgba(0,0,0,.1);
+}
+
+.kb-col--readonly {
+  /* no visual change needed — just disable pointer on drop zones */
+}

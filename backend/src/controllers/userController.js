@@ -1,5 +1,6 @@
 const User   = require('../models/User');
 const bcrypt = require('bcryptjs');
+const { sendApprovalEmail } = require('../services/emailService');
 
 // ── Safe user shape returned to client ───────────────────────────────────────
 const safeUser = (u) => ({
@@ -85,6 +86,22 @@ exports.changePassword = async (req, res) => {
 };
 
 // ============================================================
+
+// ============================================================
+// GET /api/users/salesman-stats  — counts for Approvals page
+// ============================================================
+exports.getSalesmanStats = async (req, res) => {
+  try {
+    const [pending, approved] = await Promise.all([
+      User.countDocuments({ role: 'salesman', isApproved: false }),
+      User.countDocuments({ role: 'salesman', isApproved: true  }),
+    ]);
+    res.json({ success: true, data: { pending, approved, total: pending + approved } });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
 // GET /api/users  — list users (sales_leader + cxp)
 // ============================================================
 exports.getUsers = async (req, res) => {
@@ -150,6 +167,11 @@ exports.approveUser = async (req, res) => {
     user.approvedBy = req.user._id;
     user.approvedAt = new Date();
     await user.save();
+
+    // Send confirmation email (non-blocking — don't fail approval if email fails)
+    sendApprovalEmail(user.email, user.firstName).catch((err) =>
+      console.error('[email] approval email failed:', err.message)
+    );
 
     req.app.get('io')?.emit('user:approved', {
       userId: user._id, firstName: user.firstName, lastName: user.lastName,

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'react-toastify';
-import { getUsers, approveUser } from '../../api/authApi';
+import { getUsers, approveUser, getSalesmanStats } from '../../api/authApi';
 import { useSocket } from '../../context/Socketcontext';
 import { CheckCircle2, Clock, RefreshCw, Users, AlertCircle } from 'lucide-react';
 import '../../styles/ApprovalsStyles.css';
@@ -24,15 +24,21 @@ export default function Approvals() {
   const socket = useSocket();
 
   const [salesmen,  setSalesmen]  = useState([]);
+  const [stats,     setStats]     = useState({ pending: 0, approved: 0, total: 0 });
   const [loading,   setLoading]   = useState(true);
   const [approving, setApproving] = useState(null);
-  const [approved,  setApproved]  = useState(new Set()); // for exit animation
+  const [leaving,   setLeaving]   = useState(new Set());
 
-  const fetchPending = useCallback(async (silent = false) => {
+  // Fetch pending list + real stats from DB in parallel
+  const fetchAll = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
     try {
-      const res = await getUsers({ role: 'salesman', isApproved: false });
-      setSalesmen(res.data ?? []);
+      const [pendingRes, statsRes] = await Promise.all([
+        getUsers({ role: 'salesman', isApproved: false }),
+        getSalesmanStats(),
+      ]);
+      setSalesmen(pendingRes.data ?? []);
+      setStats(statsRes.data ?? { pending: 0, approved: 0, total: 0 });
     } catch {
       toast.error('Impossible de charger les comptes en attente');
     } finally {
@@ -40,26 +46,34 @@ export default function Approvals() {
     }
   }, []);
 
-  useEffect(() => { fetchPending(); }, [fetchPending]);
+  useEffect(() => { fetchAll(); }, [fetchAll]);
 
-  // Socket: refresh when a new user registers
+  // Socket: refresh on new registration or approval from any client
   useEffect(() => {
     if (!socket) return;
-    const handler = () => fetchPending(true);
-    socket.on('user:registered', handler);
-    return () => socket.off('user:registered', handler);
-  }, [socket, fetchPending]);
+    const reload = () => fetchAll(true);
+    socket.on('user:registered', reload);
+    socket.on('user:approved',   reload);
+    return () => {
+      socket.off('user:registered', reload);
+      socket.off('user:approved',   reload);
+    };
+  }, [socket, fetchAll]);
 
   const handleApprove = async (userId) => {
     setApproving(userId);
     try {
       await approveUser(userId);
       toast.success('Compte approuvé ✓');
-      // animate out then remove
-      setApproved((prev) => new Set([...prev, userId]));
-      setTimeout(() => setSalesmen((prev) => prev.filter((u) => u._id !== userId)), 500);
+      // Animate card out, then sync real data from DB
+      setLeaving((prev) => new Set([...prev, userId]));
+      setTimeout(() => {
+        setSalesmen((prev) => prev.filter((u) => u._id !== userId));
+        setLeaving((prev) => { const s = new Set(prev); s.delete(userId); return s; });
+        fetchAll(true);
+      }, 500);
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Échec de l\'approbation');
+      toast.error(err.response?.data?.message || "Échec de l'approbation");
     } finally {
       setApproving(null);
     }
@@ -90,35 +104,35 @@ export default function Approvals() {
         <div className="ap-header__right">
           <div className="ap-badge-count">
             <Clock size={13} />
-            {loading ? '…' : salesmen.length} en attente
+            {loading ? '…' : stats.pending} en attente
           </div>
-          <button className="ap-refresh" onClick={() => fetchPending()} disabled={loading}>
+          <button className="ap-refresh" onClick={() => fetchAll()} disabled={loading}>
             <RefreshCw size={13} className={loading ? 'ap-spin' : ''} />
           </button>
         </div>
       </div>
 
-      {/* ══ KPI strip ══ */}
+      {/* ══ KPI strip — données réelles depuis la DB ══ */}
       <div className="ap-kpi-strip">
         <div className="ap-kpi">
           <div className="ap-kpi__icon ap-kpi__icon--amber"><Clock size={18} /></div>
           <div>
-            <p className="ap-kpi__value">{loading ? '—' : salesmen.length}</p>
+            <p className="ap-kpi__value">{loading ? '—' : stats.pending}</p>
             <p className="ap-kpi__label">En attente</p>
           </div>
         </div>
         <div className="ap-kpi">
           <div className="ap-kpi__icon ap-kpi__icon--emerald"><CheckCircle2 size={18} /></div>
           <div>
-            <p className="ap-kpi__value">{approved.size}</p>
-            <p className="ap-kpi__label">Approuvés (session)</p>
+            <p className="ap-kpi__value">{loading ? '—' : stats.approved}</p>
+            <p className="ap-kpi__label">Approuvés</p>
           </div>
         </div>
         <div className="ap-kpi">
           <div className="ap-kpi__icon ap-kpi__icon--indigo"><Users size={18} /></div>
           <div>
-            <p className="ap-kpi__value">{loading ? '—' : salesmen.length + approved.size}</p>
-            <p className="ap-kpi__label">Total traités</p>
+            <p className="ap-kpi__value">{loading ? '—' : stats.total}</p>
+            <p className="ap-kpi__label">Total salesmen</p>
           </div>
         </div>
       </div>
@@ -143,7 +157,7 @@ export default function Approvals() {
           {salesmen.map((user, i) => (
             <div
               key={user._id}
-              className={`ap-card${approved.has(user._id) ? ' ap-card--leaving' : ''}`}
+              className={`ap-card${leaving.has(user._id) ? ' ap-card--leaving' : ''}`}
               style={{ animationDelay: `${i * 60}ms` }}
             >
               {/* shimmer */}

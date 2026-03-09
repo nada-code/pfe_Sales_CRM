@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap');
+/* @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap'); */
 
 /* ============================================================
    DESIGN TOKENS
@@ -61,7 +61,7 @@
    BASE
    ============================================================ */
 body {
-  font-family: 'DM Sans', sans-serif;
+  /* font-family: 'DM Sans', sans-serif; */
   font-weight: 400;
   color: var(--text-primary);
   min-height: 100vh;
@@ -83,15 +83,15 @@ body {
 
   padding: 24px;
   overflow: hidden;
-    background-image: url('../../assets/login_background.jpg');
+    background-image: url('../assets//login_background.jpg');
   background-size: cover;
-  /* background-position: center; */
+  background-position: center;
   background-repeat: no-repeat;
   background-attachment: fixed;
 
   /* swap loginimage for a real background if desired */
-/* 
-   background:
+
+   /* background:
     radial-gradient(circle at 20% 30%, rgba(78,110,242,0.12), transparent 40%),
     radial-gradient(circle at 80% 70%, rgba(124,90,242,0.12), transparent 40%),
     linear-gradient(135deg, #dcddde 0%, #eef2ff 100%); */

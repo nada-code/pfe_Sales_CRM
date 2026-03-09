@@ -13,9 +13,7 @@ export const ROLE_NAV = {
   salesman: [
     { label: 'Dashboard', icon: LayoutDashboard, path: '/salesman/dashboard' },
     { label: 'My Leads',  icon: Phone,           path: '/salesman/prospects' },
-    { label: "Agenda",       icon: Calendar,    path: "/salesman/agenda"      },
-{ label: "Performance",  icon: BarChart2,   path: "/salesman/performance" },
-
+  
   ],
 };
 

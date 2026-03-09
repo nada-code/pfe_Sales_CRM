@@ -188,3 +188,73 @@ exports.sendPasswordResetEmail = async (email, resetToken) => {
     logLabel: "password-reset",
   });
 };
+
+// ============================================================
+//  ACCOUNT APPROVED EMAIL
+// ============================================================
+exports.sendApprovalEmail = async (email, firstName) => {
+  const loginUrl = `${process.env.FRONTEND_URL}/login`;
+
+  const html = buildEmail({
+    title: 'Your account has been approved',
+    preheader: `Welcome aboard, ${firstName}! Your CRM Suite account is now active.`,
+    body: `
+      <!-- Check icon circle -->
+      <div style="width:72px; height:72px; margin:0 auto 24px;
+                  border-radius:20px;
+                  background:linear-gradient(135deg, rgba(16,185,129,0.15) 0%, rgba(5,150,105,0.12) 100%);
+                  border:1px solid rgba(16,185,129,0.25);
+                  box-shadow:0 8px 32px rgba(16,185,129,0.15);
+                  font-size:32px; line-height:72px; text-align:center;">
+        ✅
+      </div>
+
+      <!-- Title -->
+      <h1 style="margin:0 0 12px;
+                 font-family:'DM Serif Display', Georgia, serif;
+                 font-size:30px; font-weight:400;
+                 color:#1a1a2e;
+                 letter-spacing:-0.02em; line-height:1.2;
+                 text-align:center;">
+        You're approved, ${firstName}!
+      </h1>
+
+      <!-- Subtitle -->
+      <p style="margin:0 0 28px; font-size:15px; color:#6b7280; text-align:center; line-height:1.65;">
+        Your sales account has been validated by your manager.<br/>
+        You can now log in and start working your leads.
+      </p>
+
+      <!-- CTA Button -->
+      <div style="text-align:center; margin-bottom:32px;">
+        <a href="${loginUrl}"
+           style="display:inline-block; padding:14px 36px;
+                  background:linear-gradient(135deg, #10b981 0%, #059669 100%);
+                  color:#ffffff; text-decoration:none; border-radius:10px;
+                  font-size:14px; font-weight:700; letter-spacing:0.06em;
+                  text-transform:uppercase; box-shadow:0 6px 20px rgba(16,185,129,0.30);">
+          Go to Dashboard
+        </a>
+      </div>
+
+      <!-- Info box -->
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td style="padding:16px 18px; background:#f0fdf4; border-radius:8px; border-left:3px solid #10b981;">
+            <p style="margin:0; font-size:13px; color:#065f46; line-height:1.6;">
+              🎯 <strong>What's next?</strong><br/>
+              Head to your dashboard to see the leads assigned to you, update statuses, and add notes after each call.
+            </p>
+          </td>
+        </tr>
+      </table>
+    `,
+  });
+
+  return sendMail({
+    to: email,
+    subject: `✅ Account approved — Welcome to the team, ${firstName}!`,
+    html,
+    logLabel: 'account-approval',
+  });
+};

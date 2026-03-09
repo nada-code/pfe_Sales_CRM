@@ -16,6 +16,9 @@ router.get('/team', protect, authorize('sales_leader'), ctrl.getTeam);
 router.get('/',                  protect, authorize('sales_leader', 'cxp'), ctrl.getUsers);
 router.put('/:userId/approve',   protect, authorize('sales_leader'),        ctrl.approveUser);
 
+// ── Salesman stats (approvals KPIs) ──────────────────────────────────────────
+router.get('/salesman-stats', protect, authorize('sales_leader'), ctrl.getSalesmanStats);
+
 // ── View one user (sales_leader views their salesmen) ────────────────────────
 router.get('/:userId', protect, authorize('sales_leader'), ctrl.getUserById);
 

@@ -9,7 +9,8 @@ import Pagination   from '../../components/leads/Pagination';
 import NewLeadModal from '../../components/modals/NewLeadModal';
 import AssignModal  from '../../components/modals/AssignModal';
 import ImportModal  from '../../components/modals/ImportModal';
-import { Upload, Plus, RefreshCw, Search, LayoutGrid, List, AlertCircle } from "lucide-react";
+import { Upload, Plus, RefreshCw, Search, LayoutGrid, List, AlertCircle,  Download } from "lucide-react";
+import ExportModal from '../../components/modals/ExportModal';
 
 import "../../styles/leads.css";
 import "../../styles/LeadsManagementStyles.css";
@@ -29,8 +30,10 @@ export default function LeadsManagement() {
   const [newLeadModal, setNewLeadModal] = useState(false);
   const [importModal,  setImportModal]  = useState(false);
   const [toast,        setToast]        = useState(null);
+  const [exportModal,  setExportModal]  = useState(false);
 
   const showToast = (msg, type = 'success') => setToast({ message: msg, type });
+
 
   const statsMap        = Object.fromEntries((stats.byStatus || []).map((s) => [s._id, s.count]));
   const unassignedCount = leads.filter((l) => !l.assignedTo).length;
@@ -65,6 +68,9 @@ export default function LeadsManagement() {
             Actualiser
           </button>
           <button className="btn-cancel" onClick={() => setImportModal(true)}>⬆ Import</button>
+          <button className="lm-btn lm-btn--ghost" onClick={() => setExportModal(true)}>
+            <Download size={14} /> Export
+          </button>
           <button className="btn-primary" onClick={() => setNewLeadModal(true)}>+ New Lead</button>
         </div>
       </div>
@@ -139,6 +145,7 @@ export default function LeadsManagement() {
           >
             <LayoutGrid size={15} />
           </button>
+         
         </div>
       </div>
 
@@ -188,6 +195,7 @@ export default function LeadsManagement() {
               )}
             </div>
           )}
+        
           {view === "table" && (
             <TableView leads={leads} onAssignClick={setAssignModal} />
           )}
@@ -214,6 +222,14 @@ export default function LeadsManagement() {
         />
       )}
 
+      {exportModal && (
+        <ExportModal
+          currentLeads={leads}
+          totalLeads={total}
+          filters={{ status: filterStatus, source: filterSource }}
+          onClose={() => setExportModal(false)}
+        />
+      )}
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
     </div>
   );

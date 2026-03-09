@@ -1,12 +1,13 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { fetchLeadById, updateLead, deleteLead } from '../../api/leadsApi';
-import { useSocket } from '../../context/Socketcontext';
+import { useSocket } from '../../context/SocketContext';
 import { STATUS_CFG, SOURCE_CFG } from '../../config/leadsConfig';
 import { fullName, fmtDate, fmtTime, acolor, av2 } from '../../utils/leadsUtils';
 import { Spinner } from '../../components/UI';
 import '../../styles/leads.css';
 import '../../styles/LeadDetail.css';
+import '../../styles/LeadHistory.css';
 
 const NOTES_PREVIEW = 2;
 const NOTE_TRUNCATE = 120;

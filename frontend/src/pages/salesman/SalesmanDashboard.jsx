@@ -6,7 +6,7 @@ import {
   ChevronRight, Award,
 } from "lucide-react";
 import { fetchLeads, fetchStats, changeStatus } from "../../api/leadsApi";
-import { useSocket } from "../../context/Socketcontext";
+import { useSocket } from "../../context/SocketContext";
 import { useAuth } from "../../context/AuthContext";
 import { STATUS_CFG } from "../../config/leadsConfig";
 import { acolor, initials } from "../../utils/LeadsUtils";
@@ -325,7 +325,7 @@ export default function SalesmanDashboard() {
                         </div>
                         <div className="sd-act-body">
                           <p className="sd-act-text">
-                            <strong>{name}</strong>
+                            <>{name}</>
                             <span className="sd-act-status" style={{ color: sc?.color }}>
                               {" · "}{sc?.label ?? l.status}
                             </span>
@@ -406,7 +406,7 @@ export default function SalesmanDashboard() {
                     {sc?.label ?? l.status}
                   </span>
                   {/* Date */}
-                  <span className="sd-lead-date">{fmtDate(l.createdAt)}</span>
+                  <span className="sd-act-time">{fmtDate(l.createdAt)}</span>
                   {/* Arrow */}
                   <ChevronRight size={14} className="sd-lead-arrow" />
                 </div>

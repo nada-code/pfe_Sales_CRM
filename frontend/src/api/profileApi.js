@@ -6,3 +6,4 @@ export const changePassword  = (data)   => api.put('/users/change-password', dat
 export const getProfiles     = ()       => api.get('/users');
 export const getTeamProfiles = ()       => api.get('/users/team');
 export const getUserProfile  = (userId) => api.get(`/users/${userId}`);
+

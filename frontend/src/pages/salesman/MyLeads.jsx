@@ -1,12 +1,14 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { fetchLeads, fetchStats, changeStatus } from '../../api/leadsApi';
 import { useSocket } from '../../context/Socketcontext';
-import LeadCard     from '../../components/leads/LeadCard';
-import TableView    from '../../components/leads/TableView';
+import LeadCard    from '../../components/leads/LeadCard';
+import TableView   from '../../components/leads/TableView';
+import KanbanView  from '../../components/leads/KanbanView';
+import ExportModal from '../../components/modals/ExportModal';
+import Pagination  from '../../components/leads/Pagination';
+import { Spinner, Toast } from '../../components/UI';
 import { STATUS_CFG, SOURCE_CFG, PAGE_SIZE } from '../../config/leadsConfig';
-import { Spinner, Toast, SourceBadge } from '../../components/UI';
-import Pagination from '../../components/leads/Pagination';
-import { RefreshCw, Search, LayoutGrid, List, AlertCircle } from 'lucide-react';
+import { RefreshCw, Search, LayoutGrid, List, AlertCircle, Kanban, Download } from 'lucide-react';
 import '../../styles/leads.css';
 import '../../styles/LeadsManagementStyles.css';
 
@@ -26,12 +28,14 @@ export default function MyLeads() {
   const [filterSource, setFilterSource] = useState('');
   const [view,         setView]         = useState('table');
   const [toast,        setToast]        = useState(null);
+  const [exportModal,  setExportModal]  = useState(false);
+
   const debounceTimer = useRef(null);
   const loadRef       = useRef(null);
 
-  // ── Loader ─────────────────────────────────────────────────────────────────
   const load = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
+    setError(null);
     try {
       const params = {
         page, limit: PAGE_SIZE,
@@ -52,10 +56,8 @@ export default function MyLeads() {
   }, [page, search, filterStatus, filterSource]);
 
   loadRef.current = load;
-
   useEffect(() => { load(); }, [load]);
 
-  // ── Socket: silent reload on any lead event ────────────────────────────────
   useEffect(() => {
     if (!socket) return;
     const reload = () => loadRef.current?.(true);
@@ -71,14 +73,12 @@ export default function MyLeads() {
     };
   }, [socket]);
 
-  // ── Search debounce ────────────────────────────────────────────────────────
   function handleSearchInput(val) {
     setSearchInput(val);
     clearTimeout(debounceTimer.current);
     debounceTimer.current = setTimeout(() => { setSearch(val); setPage(1); }, 400);
   }
 
-  // ── Status change ──────────────────────────────────────────────────────────
   async function handleStatusChange(leadId, newStatus, e) {
     e?.stopPropagation();
     try {
@@ -93,27 +93,26 @@ export default function MyLeads() {
   return (
     <div className="lm-root">
 
-      {/* ── Header ── */}
+      {/* Header */}
       <div className="lm-header">
         <div>
-          <h1 className="sd-title">My Leads</h1>
+          <h1 className="lm-title">Mes Leads</h1>
           <p className={`lm-subtitle${error ? ' lm-subtitle--danger' : ''}`}>
-            {error ? `⚠ ${error}` : `${total} leads assigned to you`}
+            {error ? `⚠ ${error}` : `${total} lead${total > 1 ? 's' : ''} assigné${total > 1 ? 's' : ''}`}
           </p>
         </div>
         <div className="lm-header__actions">
-          <button
-            className="lm-btn lm-btn--ghost"
-            onClick={() => load()}
-            disabled={loading}
-          >
+          <button className="lm-btn lm-btn--ghost" onClick={() => load()} disabled={loading}>
             <RefreshCw size={14} className={loading ? 'lm-spin' : ''} />
             {loading ? 'Chargement…' : 'Actualiser'}
+          </button>
+          <button className="lm-btn lm-btn--ghost" onClick={() => setExportModal(true)}>
+            <Download size={14} /> Export
           </button>
         </div>
       </div>
 
-      {/* ── Stats bar ── */}
+      {/* Stats bar */}
       <div className="lm-stats">
         {Object.entries(STATUS_CFG).map(([k, v], i) => (
           <button
@@ -129,20 +128,18 @@ export default function MyLeads() {
             <p className="lm-stat-count" style={{ color: v.color }}>
               {loading ? '—' : (statsMap[k] ?? 0)}
             </p>
-            {filterStatus === k && (
-              <div className="lm-stat-card__bar" style={{ background: v.color }} />
-            )}
+            {filterStatus === k && <div className="lm-stat-card__bar" style={{ background: v.color }} />}
           </button>
         ))}
       </div>
 
-      {/* ── Toolbar ── */}
+      {/* Toolbar */}
       <div className="lm-toolbar">
         <div className="lm-search">
           <Search size={14} className="lm-search__icon" />
           <input
             className="lm-search__input"
-            placeholder="Search by name, email, phone…"
+            placeholder="Recherche par nom, email, téléphone…"
             value={searchInput}
             onChange={(e) => handleSearchInput(e.target.value)}
           />
@@ -152,54 +149,43 @@ export default function MyLeads() {
           )}
         </div>
 
-        <select
-          className="lm-filter-select"
-          value={filterStatus}
-          onChange={(e) => { setFilterStatus(e.target.value); setPage(1); }}
-        >
-          <option value="">All Statuses</option>
+        <select className="lm-filter-select" value={filterStatus}
+          onChange={(e) => { setFilterStatus(e.target.value); setPage(1); }}>
+          <option value="">Tous les statuts</option>
           {Object.entries(STATUS_CFG).map(([k, v]) => (
             <option key={k} value={k}>{v.label}</option>
           ))}
         </select>
 
-        <select
-          className="lm-filter-select"
-          value={filterSource}
-          onChange={(e) => { setFilterSource(e.target.value); setPage(1); }}
-        >
-          <option value="">All Sources</option>
+        <select className="lm-filter-select" value={filterSource}
+          onChange={(e) => { setFilterSource(e.target.value); setPage(1); }}>
+          <option value="">Toutes les sources</option>
           {Object.entries(SOURCE_CFG).map(([k, v]) => (
             <option key={k} value={k}>{v.label}</option>
           ))}
         </select>
 
         <div className="lm-view-toggle">
-          <button
-            className={`lm-view-btn${view === 'table' ? ' active' : ''}`}
-            onClick={() => setView('table')} title="Vue tableau"
-          >
-            <List size={15} />
-          </button>
-          <button
-            className={`lm-view-btn${view === 'cards' ? ' active' : ''}`}
-            onClick={() => setView('cards')} title="Vue cartes"
-          >
-            <LayoutGrid size={15} />
-          </button>
+          <button className={`lm-view-btn${view === 'table'  ? ' active' : ''}`}
+            onClick={() => setView('table')}  title="Vue tableau"><List size={15} /></button>
+          <button className={`lm-view-btn${view === 'cards'  ? ' active' : ''}`}
+            onClick={() => setView('cards')}  title="Vue cartes"><LayoutGrid size={15} /></button>
+          <button className={`lm-view-btn${view === 'kanban' ? ' active' : ''}`}
+            onClick={() => setView('kanban')} title="Vue Kanban"><Kanban size={15} /></button>
         </div>
       </div>
 
-      {/* ── Count ── */}
+      {/* Count */}
       <div className="lm-count">
         {loading && <Spinner size={12} />}
         <span>
           {leads.length} / {total} leads
           {filterStatus && ` · ${STATUS_CFG[filterStatus]?.label}`}
+          {filterSource && ` · ${SOURCE_CFG[filterSource]?.label}`}
         </span>
       </div>
 
-      {/* ── Error ── */}
+      {/* Error */}
       {error && (
         <div className="lm-error">
           <AlertCircle size={14} /> {error}
@@ -207,7 +193,7 @@ export default function MyLeads() {
         </div>
       )}
 
-      {/* ── Skeletons ── */}
+      {/* Skeletons */}
       {loading && leads.length === 0 && (
         <div className="lm-skel-grid">
           {[1,2,3,4,5,6].map((i) => (
@@ -220,9 +206,17 @@ export default function MyLeads() {
         </div>
       )}
 
-      {/* ── Content ── */}
+      {/* Content */}
       {(!loading || leads.length > 0) && (
         <>
+          {view === 'kanban' && (
+            <KanbanView
+              leads={leads}
+              basePath="/salesman/leads"
+              onStatusChange={handleStatusChange}
+            />
+          )}
+
           {view === 'cards' && (
             <div className="leads-cards-grid">
               {leads.map((l) => (
@@ -231,8 +225,8 @@ export default function MyLeads() {
               {leads.length === 0 && !loading && (
                 <div className="lm-empty">
                   <div className="lm-empty__icon">🔍</div>
-                  <p className="lm-empty__title">No leads found</p>
-                  <p className="lm-empty__hint">Try adjusting your filters</p>
+                  <p className="lm-empty__title">Aucun lead trouvé</p>
+                  <p className="lm-empty__hint">Essayez d'ajuster vos filtres</p>
                 </div>
               )}
             </div>
@@ -246,10 +240,21 @@ export default function MyLeads() {
             />
           )}
 
-          <Pagination page={page} pages={pages} total={total} onPage={setPage} />
+          {view !== 'kanban' && (
+            <Pagination page={page} pages={pages} total={total} onPage={setPage} />
+          )}
         </>
       )}
 
+      {/* Modals */}
+      {exportModal && (
+        <ExportModal
+          currentLeads={leads}
+          totalLeads={total}
+          filters={{ status: filterStatus, source: filterSource }}
+          onClose={() => setExportModal(false)}
+        />
+      )}
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
     </div>
   );

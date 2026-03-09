@@ -70,6 +70,16 @@ exports.signup = async (req, res) => {
 
     // For pending salesman, don't return tokens yet
     if (!user.isApproved) {
+      // Notify sales leaders in real-time that a new salesman is waiting for approval
+      req.app.get('io')?.emit('user:registered', {
+        _id:       user._id,
+        firstName: user.firstName,
+        lastName:  user.lastName,
+        email:     user.email,
+        role:      user.role,
+        createdAt: user.createdAt,
+      });
+
       return res.status(201).json({
         success: true,
         message: "Account created. Awaiting approval from sales leader.",
@@ -180,6 +190,7 @@ exports.login = async (req, res) => {
         lastName: user.lastName,
         role: user.role,
         isApproved: user.isApproved,
+        avatar: user.avatar || null,
       },
     });
   } catch (error) {
@@ -363,6 +374,7 @@ exports.resetPassword = async (req, res) => {
         firstName: user.firstName,
         lastName: user.lastName,
         role: user.role,
+        avatar: user.avatar || null,
       },
     });
   } catch (error) {
