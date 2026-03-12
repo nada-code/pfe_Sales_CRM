@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { signup } from '../../api/authApi';
 import { useAuth } from '../../context/AuthContext';
 import { ROLE_DEFAULT_ROUTE } from '../../config/roleConfig';
-   import '../../styles/Auth.css'
+import '../../styles/Auth.css';
 import { toast } from 'react-toastify';
 
 const ROLES = [
@@ -11,6 +11,17 @@ const ROLES = [
   { value: 'cxp',          label: 'CXP' },
   { value: 'sales_leader', label: 'Sales Leader' },
 ];
+
+const AnimatedBg = () => (
+  <>
+    <div className="auth-bg-layer" />
+    <div className="auth-grid-overlay" />
+    <div className="auth-rays" />
+    <div className="auth-particles">
+      {Array.from({ length: 12 }).map((_, i) => <span key={i} />)}
+    </div>
+  </>
+);
 
 const Signup = () => {
   const navigate = useNavigate();
@@ -39,7 +50,6 @@ const Signup = () => {
     try {
       const response = await signup(form);
 
-      // Salesman awaiting approval
       if (response.user?.isApproved === false) {
         setPendingApproval(true);
         return;
@@ -59,17 +69,17 @@ const Signup = () => {
     }
   };
 
-  /* ── Pending approval screen ─────────────────────────────────────────── */
   if (pendingApproval) {
     return (
       <div className="auth-container">
+        <AnimatedBg />
         <div className="auth-box">
           <div className="pending-approval">
             <div className="pending-icon">⏳</div>
             <h2>Account Pending Approval</h2>
             <p>
               Your salesman account has been created and is waiting for
-              approval from a sales leader Check your email.
+              approval from a sales leader. Check your email.
             </p>
             <p className="pending-subtitle">
               You will be able to log in once your account has been approved.
@@ -87,9 +97,9 @@ const Signup = () => {
     );
   }
 
-  /* ── Signup form ─────────────────────────────────────────────────────── */
   return (
     <div className="auth-container">
+      <AnimatedBg />
       <div className="auth-box">
         <div className="auth-header">
           <h1>Create Account</h1>
@@ -99,14 +109,7 @@ const Signup = () => {
         {error && <div className="auth-error">{error}</div>}
 
         <form onSubmit={handleSubmit} className="auth-form">
-          {/* First + Last name row */}
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
-              gap: '12px',
-            }}
-          >
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
             <div className="form-group">
               <label>First Name</label>
               <input
@@ -167,28 +170,14 @@ const Signup = () => {
               value={form.role}
               onChange={handleChange}
               disabled={isSubmitting}
-              className="auth-select"
             >
               {ROLES.map((r) => (
-                <option key={r.value} value={r.value}>
-                  {r.label}
-                </option>
+                <option key={r.value} value={r.value}>{r.label}</option>
               ))}
             </select>
           </div>
 
-          {/* {form.role === 'salesman' && (
-            <div className="auth-info-banner">
-              ℹ️ Salesman accounts require approval from a sales leader before
-              you can log in.
-            </div>
-          )} */}
-
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="submit-button"
-          >
+          <button type="submit" disabled={isSubmitting} className="submit-button">
             {isSubmitting ? 'Creating account…' : 'Create Account'}
           </button>
         </form>
@@ -196,9 +185,7 @@ const Signup = () => {
         <div className="auth-footer">
           <p>
             Already have an account?{' '}
-            <Link to="/login" className="link-bold">
-              Sign in here
-            </Link>
+            <Link to="/login" className="link-bold">Sign in here</Link>
           </p>
         </div>
       </div>

@@ -12,19 +12,23 @@ router.get('/:id',   protect, ctrl.getLeadById);
 router.post('/',       protect, authorize('sales_leader'), ctrl.createLead);
 router.post('/import', protect, authorize('sales_leader'), ctrl.importLeads);
 
-// Modification — sales_leader , salesman ET CXP
-// (le controller filtre les champs selon le rôle)
-router.put('/:id', protect, authorize('sales_leader', 'salesman', 'CXP'), ctrl.updateLead);
+// Modification — sales_leader, salesman, CXP
+router.put('/:id', protect, authorize('sales_leader', 'salesman', 'cxp'), ctrl.updateLead);
 
-// Actions sales_leader uniquement
+// Actions sales_leader
 router.delete('/:id',     protect, authorize('sales_leader'), ctrl.deleteLead);
 router.put('/:id/assign', protect, authorize('sales_leader'), ctrl.assignLead);
 
-// Historique — tous rôles
+// Statut — salesman et CXP peuvent changer (sales_leader aussi)
+router.put('/:id/status', protect, authorize('sales_leader', 'cxp', 'salesman'), ctrl.changeStatus);
 
-// Statut + Notes — sales_leader, salesman ET CXP
-router.put('/:id/status', protect, authorize( 'CXP', 'salesman'), ctrl.changeStatus);
-router.post('/:id/note',  protect, authorize('sales_leader', 'CXP', 'salesman'), ctrl.addNote);
+// Notes — tous les rôles
+router.post('/:id/note', protect, authorize( 'cxp', 'salesman'), ctrl.addNote);
 
+// Signaler un problème — salesman et CXP
+router.post('/report-problem', protect, authorize('salesman', 'cxp'), ctrl.reportProblem);
+
+// Statut livraison — CXP uniquement
+router.post('/report-delivery', protect, authorize('cxp'), ctrl.reportDelivery);
 
 module.exports = router;

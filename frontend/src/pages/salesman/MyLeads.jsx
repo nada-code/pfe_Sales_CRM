@@ -136,7 +136,7 @@ export default function MyLeads() {
       {/* Toolbar */}
       <div className="lm-toolbar">
         <div className="lm-search">
-          <Search size={14} className="lm-search__icon" />
+          <span size={14} className="lm-search__icon" />🔍
           <input
             className="lm-search__input"
             placeholder="Recherche par nom, email, téléphone…"
@@ -220,7 +220,7 @@ export default function MyLeads() {
           {view === 'cards' && (
             <div className="leads-cards-grid">
               {leads.map((l) => (
-                <LeadCard key={l._id} lead={l} basePath="/salesman/leads" />
+                <LeadCard key={l._id} lead={l} basePath="/salesman/leads" showAddNote={true} />
               ))}
               {leads.length === 0 && !loading && (
                 <div className="lm-empty">
@@ -237,6 +237,8 @@ export default function MyLeads() {
               leads={leads}
               basePath="/salesman/leads"
               onStatusChange={handleStatusChange}
+              showPreview={false}
+              showAddNote={true}
             />
           )}
 

@@ -7,6 +7,18 @@ import '../../styles/Auth.css';
 
 import { toast } from "react-toastify";
 
+/* Helper: renders the animated background layers inside auth-container */
+const AnimatedBg = () => (
+  <>
+    <div className="auth-bg-layer" />
+    <div className="auth-grid-overlay" />
+    <div className="auth-rays" />
+    <div className="auth-particles">
+      {Array.from({ length: 12 }).map((_, i) => <span key={i} />)}
+    </div>
+  </>
+);
+
 const Login = () => {
   const navigate      = useNavigate();
   const { setLoggedInUser } = useAuth();
@@ -26,20 +38,17 @@ const Login = () => {
     setError('');
 
     try {
-      const response = await login(form); // authApi s'occupe de stocker token & refreshToken
+      const response = await login(form);
 
       toast.success(response.message || "Login successful");
-      // Hydrate global auth state (so DashboardLayout can read user immediately)
       setLoggedInUser(response.user);
 
-      // Redirect to the role-specific dashboard
       const destination = ROLE_DEFAULT_ROUTE[response.user?.role] ?? '/';
       navigate(destination, { replace: true });
 
     } catch (error) {
       const message = error.response?.data?.message || error.message || "Login failed";
       
-      // Check if this is a pending approval error
       if (error.response?.status === 403 && error.response?.data?.isApproved === false) {
         setPendingApproval(true);
       } else {
@@ -51,24 +60,19 @@ const Login = () => {
     }
   };
 
-  // Show pending approval message
   if (pendingApproval) {
     return (
       <div className="auth-container">
+        <AnimatedBg />
         <div className="auth-box">
           <div className="pending-approval">
             <div className="pending-icon">⏳</div>
             <h2>Account Pending Approval</h2>
-            <p>
-              Your salesman account is waiting for approval from a sales leader.
-            </p>
+            <p>Your salesman account is waiting for approval from a sales leader.</p>
             <p className="pending-subtitle">
               You will receive an email notification once your account has been approved.
             </p>
-            <button
-              onClick={() => setPendingApproval(false)}
-              className="auth-link-btn"
-            >
+            <button onClick={() => setPendingApproval(false)} className="auth-link-btn">
               Try Again
             </button>
           </div>
@@ -79,6 +83,7 @@ const Login = () => {
 
   return (
     <div className="auth-container">
+      <AnimatedBg />
       <div className="auth-box">
         <div className="auth-header">
           <h1>Welcome Back</h1>
@@ -124,14 +129,10 @@ const Login = () => {
         <div className="auth-footer">
           <p>
             Don't have an account?{' '}
-            <Link to="/signup" className="link-bold">
-              Sign up here
-            </Link>
+            <Link to="/signup" className="link-bold">Sign up here</Link>
           </p>
           <p>
-            <Link to="/forgot-password" className="link">
-              Forgot your password?
-            </Link>
+            <Link to="/forgot-password" className="link">Forgot your password?</Link>
           </p>
         </div>
       </div>

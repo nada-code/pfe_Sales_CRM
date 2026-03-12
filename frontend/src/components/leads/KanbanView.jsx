@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import QuickNoteModal from '../modals/QuickNoteModal';
 import { KANBAN_COLS, STATUS_CFG } from '../../config/leadsConfig';
 import { acolor, av2, fmtDate } from '../../utils/leadsUtils';
 import '../../styles/KanbanView.css';
@@ -12,14 +13,19 @@ function shortId(id) {
 }
 
 // ── KanbanCard ───────────────────────────────────────────────────────────────
-function KanbanCard({ lead, basePath, onDragStart, isDragging, onAssignClick, readOnly }) {
+function KanbanCard({ lead, basePath, onDragStart, isDragging, onAssignClick, readOnly, showAddNote = true }) {
   const navigate   = useNavigate();
+  const [noteTarget, setNoteTarget] = useState(null); // lead object for QuickNoteModal
+
   const statusCfg  = STATUS_CFG[lead.status] || STATUS_CFG.New;
   const avColor    = lead.assignedTo ? acolor(lead.assignedTo._id) : '#94a3b8';
   const lastNote   = lead.notes?.[lead.notes.length - 1];
   const noteText   = lastNote?.content?.slice(0, NOTE_PREVIEW) || '';
 
+
+
   return (
+    <>
     <div
       className={`kb-card${isDragging ? ' kb-card--dragging' : ''}${readOnly ? ' kb-card--readonly' : ''}`}
       draggable={!readOnly}
@@ -57,18 +63,31 @@ function KanbanCard({ lead, basePath, onDragStart, isDragging, onAssignClick, re
 
       {/* Note preview */}
       {noteText && (
-        <p className="kb-card__note">✎ {noteText}{lastNote?.content?.length > NOTE_PREVIEW ? '…' : ''}</p>
+        <p className="kb-card__note" >✎ {noteText}{lastNote?.content?.length > NOTE_PREVIEW ? '…' : ''}
+         {showAddNote && (
+                        <button
+                          className="qn-add-btn"
+                          title="Ajouter une note rapide"
+                          onClick={(e) => { e.stopPropagation(); setNoteTarget(lead._id); }}
+                        >
+                          ✎
+                        </button>
+                     
+                      )}</p>
       )}
+       {/* Quick add note */}
+         
+      
 
       {/* Source + city */}
-      <div className="kb-card__tags">
+      {/* <div className="kb-card__tags">
         {lead.source && (
           <span className="kb-tag kb-tag--source">{lead.source}</span>
         )}
         {lead.city && (
           <span className="kb-tag kb-tag--city">📍 {lead.city}</span>
         )}
-      </div>
+      </div> */}
 
       {/* Footer */}
       <div className="kb-card__footer">
@@ -93,6 +112,18 @@ function KanbanCard({ lead, basePath, onDragStart, isDragging, onAssignClick, re
         )}
       </div>
     </div>
+     {/* QuickNoteModal */}
+                {noteTarget && (
+                  <QuickNoteModal
+                    lead={lead}
+                    onClose={() => setNoteTarget(null)}
+                    onDone={(msg) => {
+                      setNoteTarget(null);
+                      showAddNote?.(msg);
+                    }}
+                  />
+                )}
+                </>
   );
 }
 
@@ -144,6 +175,7 @@ function KanbanColumn({ colKey, leads, basePath, dragState, onDragStart, onDrop,
               onAssignClick={onAssignClick}
               readOnly={readOnly}
               style={{ animationDelay: `${i * 35}ms` }}
+              showAddNote={!readOnly}
             />
           ))
         )}
@@ -208,6 +240,7 @@ export default function KanbanView({
   }, []);
 
   return (
+    <>
     <div className="kb-root" onDragEnd={handleDragEnd}>
       {readOnly && (
         <div className="kb-readonly-banner">
@@ -242,5 +275,7 @@ export default function KanbanView({
         </div>
       )}
     </div>
+   
+                </>
   );
 }

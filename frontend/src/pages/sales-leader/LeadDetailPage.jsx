@@ -262,47 +262,67 @@ export default function LeadDetailPage() {
         {tab === "notes" && (
           <div className="ld-notes">
             <div className="ld-notes__header">
-              <div>
+              <div className="ld-notes__title-block">
+                <p className="ld-notes__eyebrow">Lead activity</p>
                 <h2 className="ld-notes__title">Notes</h2>
-                <p className="ld-notes__sub">{lead.notes?.length ? `${lead.notes.length} note(s) — written by salesmen` : "No notes yet"}</p>
+                <p className="ld-notes__sub">
+                  {lead.notes?.length
+                    ? `${lead.notes.length} note${lead.notes.length > 1 ? 's' : ''} — written by salesmen & CXP`
+                    : "No notes yet"}
+                </p>
               </div>
-              <span className="ld-readonly-badge">👁 Read only</span>
+              <span className="ld-notes__badge">👁 Read only</span>
             </div>
+
             {(!lead.notes || lead.notes.length === 0) && (
               <div className="ld-notes__empty">
                 <div className="ld-notes__empty-icon">📝</div>
                 <p className="ld-notes__empty-title">No notes yet</p>
-                <p className="ld-notes__empty-sub">Salesmen write notes when they contact a lead.</p>
+                <p className="ld-notes__empty-sub">Salesmen and CXP write notes when they contact a lead.</p>
               </div>
             )}
+
             {lead.notes?.length > 0 && (
               <>
-                <div className="ld-notes__list">
+                <div className="ld-timeline">
                   {visibleNotes.map((note, i) => {
                     const isExp  = expandedNote === i;
                     const isLong = note.content?.length > NOTE_TRUNCATE;
+                    const noteNum = lead.notes.length - (visibleNotes.length - 1 - i);
                     return (
-                      <div key={i} className="ld-note-card" style={{ animationDelay: `${i * 50}ms` }}>
-                        <div className="ld-note-card__header">
-                          <span className="ld-note-card__dot" />
-                          <span className="ld-note-card__index">Note {lead.notes.length - (visibleNotes.length - 1 - i)}</span>
-                          <span className="ld-note-card__time">{fmtDate(note.createdAt)} · {fmtTime(note.createdAt)}</span>
+                      <div key={i} className="ld-note-entry" style={{ animationDelay: `${i * 60}ms` }}>
+                        <span className="ld-note-entry__dot" />
+                        <div className="ld-note-entry__card">
+                          <div className="ld-note-entry__header">
+                            <span className="ld-note-entry__num">Note #{noteNum}</span>
+                            <span className="ld-note-entry__date">
+                              <span className="ld-note-entry__date-icon">📅</span>
+                              {fmtDate(note.createdAt)} · {fmtTime(note.createdAt)}
+                            </span>
+                          </div>
+                          <p className="ld-note-entry__body">
+                            {isExp || !isLong
+                              ? note.content
+                              : note.content?.slice(0, NOTE_TRUNCATE) + "…"}
+                          </p>
+                          {isLong && (
+                            <button className="ld-note-entry__expand"
+                              onClick={() => setExpandedNote(isExp ? null : i)}>
+                              {isExp ? "↑ Show less" : "↓ Read more"}
+                            </button>
+                          )}
                         </div>
-                        <p className="ld-note-card__body">
-                          {isExp || !isLong ? note.content : note.content?.slice(0, NOTE_TRUNCATE) + "…"}
-                        </p>
-                        {isLong && (
-                          <button className="ld-link-btn" onClick={() => setExpandedNote(isExp ? null : i)}>
-                            {isExp ? "Show less ↑" : "Read more ↓"}
-                          </button>
-                        )}
                       </div>
                     );
                   })}
                 </div>
+
                 {lead.notes.length > NOTES_PREVIEW && (
-                  <button className="ld-notes__toggle" onClick={() => { setNotesExpanded(!notesExpanded); setExpandedNote(null); }}>
-                    {notesExpanded ? `↑ Show less (${NOTES_PREVIEW} most recent)` : `↓ Show all ${lead.notes.length} notes`}
+                  <button className="ld-notes__toggle"
+                    onClick={() => { setNotesExpanded(!notesExpanded); setExpandedNote(null); }}>
+                    {notesExpanded
+                      ? `↑ Show less (${NOTES_PREVIEW} most recent)`
+                      : `↓ Show all ${lead.notes.length} notes`}
                   </button>
                 )}
               </>

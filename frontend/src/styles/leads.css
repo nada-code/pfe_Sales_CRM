@@ -477,3 +477,180 @@ button:disabled              { cursor: not-allowed; }
   padding-top: 4px;
   border-top: 1px solid #f1f5f9;
 }
+/* ════════════════════════════════════════════════════════════════
+   QuickNote — modal styles + inline buttons
+   qn-prev : notes preview inside modal
+   qn-add-btn : inline "✎" trigger in TableView / LeadCard / Kanban
+════════════════════════════════════════════════════════════════ */
+
+/* ── qn-textarea ─────────────────────────────────────────────── */
+.qn-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1.5px solid var(--bd);
+  border-radius: var(--r2);
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--t2);
+  background: var(--w);
+  resize: vertical;
+  min-height: 96px;
+  line-height: 1.6;
+  outline: none;
+  transition: border-color .18s;
+  display: block;
+}
+.qn-textarea:focus { border-color: var(--pr); }
+.qn-textarea:disabled { opacity: .55; }
+
+/* ── chars counter ───────────────────────────────────────────── */
+.qn-chars {
+  font-size: 11px;
+  color: var(--tf);
+  text-align: right;
+  margin: 4px 0 0;
+}
+
+/* ── Previous notes preview ──────────────────────────────────── */
+.qn-prev {
+  background: var(--bg);
+  border: 1px solid var(--bd);
+  border-radius: var(--r2);
+  padding: 10px 14px;
+  margin-bottom: 14px;
+}
+.qn-prev__label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  color: var(--tf);
+  margin-bottom: 8px;
+}
+.qn-prev__item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--bd);
+}
+.qn-prev__item:last-of-type { border-bottom: none; }
+.qn-prev__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--pr);
+  flex-shrink: 0;
+  margin-top: 5px;
+}
+.qn-prev__text {
+  font-size: 12px;
+  color: var(--t2);
+  line-height: 1.5;
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.qn-prev__more {
+  font-size: 11px;
+  color: var(--tf);
+  font-style: italic;
+  margin: 6px 0 0;
+  text-align: center;
+}
+
+/* ── qn-cell (wraps preview + add button in TableView) ───────── */
+.qn-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ── qn-add-btn (inline quick-add trigger) ───────────────────── */
+.cxp-table__notes {
+  font-size: 11px; font-weight: 600; color: #94a3b8;
+  padding: 3px 8px; border-radius: 99px; background: #f8fafc; border: 1px solid #e2e8f0;
+}
+.cxp-table__notes--has { color: #0ea5e9; border-color: #bae6fd; background: #f0f9ff; }
+.cxp-table__none  { color: #cbd5e1; font-size: 12px; }
+
+.qn-add-btn {
+  width: 48px;
+  height: 28px;
+  border-radius: var(--r1);
+  border: 1.5px solid var(--bd);
+  background: var(--bg);
+  color: var(--pr);
+  
+}
+.qn-add-btn:hover {
+  background: var(--pl);
+  border-color: var(--pr);
+  transform: scale(1.1);
+}
+
+/* Card variant — shows text label */
+.qn-add-btn--card {
+  width: auto;
+  padding: 4px 10px;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 99px;
+  height: auto;
+}
+
+/* ── lead-card notes row ─────────────────────────────────────── */
+.lead-card__notes-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+.lead-card__notes-row .lead-card__notes-preview,
+.lead-card__notes-row .lead-card__notes-empty {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ── Kanban note button ──────────────────────────────────────── */
+.kb-note-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 99px;
+  border: 1.5px solid var(--bd, #e2e8f0);
+  background: var(--bg, #f8fafc);
+  color: var(--pr, #6366f1);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background .15s, border-color .15s;
+}
+.kb-note-btn:hover {
+  background: var(--pl, #eef2ff);
+  border-color: var(--pr, #6366f1);
+}
+.kb-note-btn__count {
+  background: var(--pr, #6366f1);
+  color: #fff;
+  border-radius: 99px;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 0 5px;
+  min-width: 16px;
+  text-align: center;
+}
+
+/* ── Kanban card footer with actions row ─────────────────────── */
+.kb-card__footer-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.kb-card__note--empty {
+  color: var(--tf, #94a3b8);
+  font-style: italic;
+  font-size: 11px;
+}

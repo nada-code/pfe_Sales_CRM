@@ -1,14 +1,15 @@
-// ─── roleConfig.js  (replace your existing file) ─────────────────────────────
-import { LayoutDashboard, Users, ClipboardList, Phone, Calendar, BarChart2, TrendingUp } from 'lucide-react';
+import { LayoutDashboard, Users, ClipboardList, Phone, BellRing, CheckCircle2 } from 'lucide-react';
 
 export const ROLE_NAV = {
   sales_leader: [
-    { label: "Dashboard",        icon: LayoutDashboard, path: "/sales-leader/dashboard"   },
-    { label: "Leads Management", icon: Users,           path: "/sales-leader/leads-management"         },
-    { label: "Approvals",        icon: ClipboardList,   path: "/sales-leader/approvals"    },
+    { label: "Dashboard",        icon: LayoutDashboard, path: "/sales-leader/dashboard"        },
+    { label: "Leads Management", icon: Users,           path: "/sales-leader/leads-management" },
+    { label: "Approvals",        icon: ClipboardList,   path: "/sales-leader/approvals"        },
+    // { label: "Rappels leads",    icon: BellRing,        path: "/sales-leader/reminders"        },
   ],
   cxp: [
     { label: 'Dashboard', icon: LayoutDashboard, path: '/cxp/dashboard' },
+    { label: 'Deals',     icon: CheckCircle2,    path: '/cxp/deals'     },
   ],
   salesman: [
     { label: 'Dashboard', icon: LayoutDashboard, path: '/salesman/dashboard' },

@@ -7,12 +7,15 @@ import {
   changeStatus as apiChangeStatus,
   addNote as apiAddNote,
 } from "../../api/leadsApi";
-import { useSocket } from "../../context/Socketcontext";
+import { useSocket } from "../../context/SocketContext";
 import { STATUS_CFG, SOURCE_CFG } from "../../config/leadsConfig";
 import { fmtDate, fmtTime, acolor } from "../../utils/leadsUtils";
 import { Spinner } from "../../components/UI";
 import "../../styles/leads.css";
 import "../../styles/SalesmanLeads.css";
+
+
+
 
 export default function LeadWorkPage() {
   const { id }         = useParams();
@@ -28,6 +31,9 @@ export default function LeadWorkPage() {
   const [noteText,     setNoteText]     = useState("");
   const [noteSaving,   setNoteSaving]   = useState(false);
   const [noteError,    setNoteError]    = useState("");
+  const [notesExpanded, setNotesExpanded] = useState(false);
+  const [expandedNote,  setExpandedNote]  = useState(null);
+
   const [toast,        setToast]        = useState(null);
 
   // Edit tab state
@@ -35,8 +41,13 @@ export default function LeadWorkPage() {
   const [saving,    setSaving]    = useState(false);
   const [saveError, setSaveError] = useState("");
 
-  const noteRef = useRef(null);
 
+  const noteRef = useRef(null);
+const NOTES_PREVIEW = 2;
+const NOTE_TRUNCATE = 120;
+const visibleNotes = lead?.notes
+    ? notesExpanded ? lead.notes : lead.notes.slice(-NOTES_PREVIEW)
+    : [];
   const showToast = (msg, type = "success") => {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 3000);
@@ -283,24 +294,30 @@ export default function LeadWorkPage() {
         {tab === "notes" && (
           <div className="lw-notes">
             <div className="lw-notes__header">
-              <div>
+              <div className="lw-notes__title-block">
+                <p className="lw-notes__eyebrow">Lead activity</p>
                 <h2 className="lw-notes__title">Notes</h2>
-                <p className="lw-notes__sub">{lead.notes?.length ? `${lead.notes.length} note(s)` : "No notes yet"}</p>
+                <p className="lw-notes__sub">
+                  {lead.notes?.length
+                    ? `${lead.notes.length} note${lead.notes.length > 1 ? 's' : ''} on this lead`
+                    : "No notes yet"}
+                </p>
               </div>
             </div>
 
+            {/* ── Add note form ── */}
             <div className="lw-note-form">
-              <div className="lw-note-form__label">✎ Add a note</div>
+              <div className="lw-note-form__label">💬 Add a note</div>
               <textarea ref={noteRef} className="lw-note-textarea"
-                placeholder="Write your note here…"
+                placeholder="Write your observations, follow-up details, or any relevant info…"
                 value={noteText} rows={4} disabled={noteSaving}
                 onChange={(e) => { setNoteText(e.target.value); setNoteError(""); }} />
-              {noteError && <p className="lw-note-error">{noteError}</p>}
+              {noteError && <p className="lw-note-error">⚠ {noteError}</p>}
               <div className="lw-note-form__footer">
                 <span className="lw-note-form__chars">{noteText.length} chars</span>
                 <button className="lw-btn-add-note" onClick={handleAddNote}
-                  disabled={noteSaving || !noteText.trim()} style={{ opacity: noteSaving ? .65 : 1 }}>
-                  {noteSaving ? "Saving…" : "✎ Add note"}
+                  disabled={noteSaving || !noteText.trim()}>
+                  {noteSaving ? "Saving…" : "✎ Save note"}
                 </button>
               </div>
             </div>
@@ -309,26 +326,57 @@ export default function LeadWorkPage() {
               <div className="lw-notes__empty">
                 <div className="lw-notes__empty-icon">📝</div>
                 <p className="lw-notes__empty-title">No notes yet</p>
-                <p className="lw-notes__empty-sub">Write your first note above.</p>
+                <p className="lw-notes__empty-sub">Write your first note using the form above.</p>
               </div>
             )}
 
-            {lead.notes?.length > 0 && (
-              <div className="lw-notes__list">
-                {[...lead.notes].reverse().map((note, i) => (
-                  <div key={i} className="lw-note-card" style={{ animationDelay: `${i * 40}ms` }}>
-                    <div className="lw-note-card__header">
-                      <span className="lw-note-card__dot" />
-                      <span className="lw-note-card__num">Note {lead.notes.length - i}</span>
-                      <span className="lw-note-card__time">{fmtDate(note.createdAt)} · {fmtTime(note.createdAt)}</span>
-                    </div>
-                    <p className="lw-note-card__body">{note.content}</p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+             {lead.notes?.length > 0 && (
+                          <>
+                            <div className="ld-timeline">
+                             {visibleNotes.map((note, i) => {
+                                const isExp  = expandedNote === i;
+                                const isLong = note.content?.length > NOTE_TRUNCATE;
+                                const noteNum = lead.notes.length - (visibleNotes.length - 1 - i);
+                                return (
+                                  <div key={i} className="ld-note-entry" style={{ animationDelay: `${i * 60}ms` }}>
+                                    <span className="ld-note-entry__dot" />
+                                    <div className="ld-note-entry__card">
+                                      <div className="ld-note-entry__header">
+                                        <span className="ld-note-entry__num">Note #{noteNum}</span>
+                                        <span className="ld-note-entry__date">
+                                          <span className="ld-note-entry__date-icon">📅</span>
+                                          {fmtDate(note.createdAt)} · {fmtTime(note.createdAt)}
+                                        </span>
+                                      </div>
+                                      <p className="ld-note-entry__body">
+                                        {isExp || !isLong
+                                          ? note.content
+                                          : note.content?.slice(0, NOTE_TRUNCATE) + "…"}
+                                      </p>
+                                      {isLong && (
+                                        <button className="ld-note-entry__expand"
+                                          onClick={() => setExpandedNote(isExp ? null : i)}>
+                                          {isExp ? "↑ Show less" : "↓ Read more"}
+                                        </button>
+                                      )}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+            
+                            {lead.notes.length > NOTES_PREVIEW && (
+                              <button className="ld-notes__toggle"
+                                onClick={() => { setNotesExpanded(!notesExpanded); setExpandedNote(null); }}>
+                                {notesExpanded
+                                  ? `↑ Show less (${NOTES_PREVIEW} most recent)`
+                                  : `↓ Show all ${lead.notes.length} notes`}
+                              </button>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    )}
 {/* ── Edit tab ── */}
         {tab === "edit" && (
           <div className="ld-edit">

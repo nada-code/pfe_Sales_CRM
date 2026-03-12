@@ -18,14 +18,14 @@ import SalesLeaderDashboard from './pages/sales-leader/Dashboard';
 import SalesLeaderTeam      from './pages/sales-leader/leadsManagement';
 import SalesLeaderApprovals from './pages/sales-leader/Approvals';
 import LeadDetailPage       from './pages/sales-leader/LeadDetailPage';
-
+// import DailyCallsPage      from './pages/sales-leader/DailyCallsPage';
+import SalesLeaderReminders from './pages/sales-leader/SalesLeaderReminders';
 
 // ── Salesman pages ───────────────────────────────────────────────────────────
 import MyLeads      from './pages/salesman/MyLeads';
 import LeadWorkPage from './pages/salesman/LeadWorkPage';
 import SalesmanDashboard from './pages/salesman/SalesmanDashboard';
-
-
+// import MyCallsPage  from './pages/salesman/MyCallsPage';
 
 // ── CXP pages ────────────────────────────────────────────────────────────────
 import DashbordCxp from './pages/Cxp/DashbordCxp';
@@ -65,6 +65,12 @@ export default function App() {
               <Route path="/sales-leader/approvals"
                 element={<ProtectedRoute allowedRoles={['sales_leader']}>{W(SalesLeaderApprovals)}</ProtectedRoute>}
               />
+              {/* <Route path="/sales-leader/daily-calls"
+                element={<ProtectedRoute allowedRoles={['sales_leader']}>{W(DailyCallsPage)}</ProtectedRoute>}
+              /> */}
+              {/* <Route path="/sales-leader/reminders"
+                element={<ProtectedRoute allowedRoles={['sales_leader']}>{W(SalesLeaderReminders)}</ProtectedRoute>}
+              /> */}
               <Route path="/sales-leader/leads/:id"
                 element={<ProtectedRoute allowedRoles={['sales_leader']}>{W(LeadDetailPage)}</ProtectedRoute>}
               />
@@ -75,10 +81,14 @@ export default function App() {
               <Route path="/salesman/prospects"
                 element={<ProtectedRoute allowedRoles={['salesman']}>{W(MyLeads)}</ProtectedRoute>}
               />
+              {/* <Route path="/salesman/my-calls"
+                element={<ProtectedRoute allowedRoles={['salesman']}>{W(MyCallsPage)}</ProtectedRoute>}
+              /> */}
               <Route path="/salesman/leads/:id"
                 element={<ProtectedRoute allowedRoles={['salesman']}>{W(LeadWorkPage)}</ProtectedRoute>}
               />
-              
+
+             
 
               {/* ── CXP ── */}
               <Route path="/cxp/dashboard"

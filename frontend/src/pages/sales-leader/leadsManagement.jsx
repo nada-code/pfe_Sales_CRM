@@ -184,7 +184,7 @@ export default function LeadsManagement() {
           {view === "cards" && (
             <div className="leads-cards-grid">
               {leads.map((l) => (
-                <LeadCard key={l._id} lead={l} onAssignClick={setAssignModal} />
+                <LeadCard key={l._id} lead={l} onAssignClick={setAssignModal} onNoteAdded={false} />
               ))}
               {leads.length === 0 && !loading && (
                 <div className="lm-empty">
@@ -197,7 +197,7 @@ export default function LeadsManagement() {
           )}
         
           {view === "table" && (
-            <TableView leads={leads} onAssignClick={setAssignModal} />
+            <TableView leads={leads} onAssignClick={setAssignModal} showAddNote={false} />
           )}
           <Pagination page={page} pages={pages} total={total} onPage={setPage} />
         </>

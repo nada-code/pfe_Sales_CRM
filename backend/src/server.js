@@ -5,9 +5,11 @@ const http    = require('http');
 const { Server } = require('socket.io');
 const { connectDB } = require('./config/database');
 
-const authRoutes = require('./routes/authRoutes');
-const userRoutes = require('./routes/userRoutes');
-const leadRoutes = require('./routes/leadsRoutes');
+const authRoutes         = require('./routes/authRoutes');
+const userRoutes         = require('./routes/userRoutes');
+const leadRoutes         = require('./routes/leadsRoutes');
+// const notificationRoutes = require('./routes/notificationRoutes');
+// const reminderRoutes     = require('./routes/reminderRoutes');
 
 const app    = express();
 const server = http.createServer(app);
@@ -37,6 +39,8 @@ connectDB();
 app.use('/api/auth',  authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/leads', leadRoutes);
+// app.use('/api/notifications', notificationRoutes);
+// app.use('/api/reminders',     reminderRoutes);
 
 app.get('/', (_req, res) => res.send('CRM API Running...'));
 

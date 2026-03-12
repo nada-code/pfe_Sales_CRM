@@ -388,102 +388,246 @@
 .lw-btn-add-note:hover:not(:disabled) { filter: brightness(1.08); transform: translateY(-1px); }
 .lw-btn-add-note:disabled { cursor: not-allowed; }
 
-/* ── Notes tab ─────────────────────────────────────────────────── */
-.lw-notes { animation: fadeUp .3s ease both; }
+/* ── Notes tab — timeline redesign ────────────────────────────── */
+.lw-notes { animation: fadeUp .3s ease both; max-width: 760px; }
 
 .lw-notes__header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  margin-bottom: 20px;
-  padding-bottom: 16px;
-  border-bottom: 1.5px solid #e5eaf2;
+  margin-bottom: 28px;
 }
-.lw-notes__title { font-size: 20px; font-weight: 800; color: #0d1117; margin: 0 0 4px; }
+
+.lw-notes__title-block { flex: 1; }
+
+.lw-notes__eyebrow {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: #10b981;
+  margin: 0 0 6px;
+}
+
+.lw-notes__title { font-size: 24px; font-weight: 800; color: #0d1117; margin: 0 0 4px; font-family: 'Fraunces', serif; letter-spacing: -.4px; }
 .lw-notes__sub   { font-size: 13px; color: #9aa3b5; margin: 0; }
 
+/* ── Add note form ─────────────────────────────────────────────── */
 .lw-note-form {
-  background: #fff;
-  border: 1.5px solid #e5eaf2;
-  border-radius: 16px;
-  padding: 20px 22px;
-  margin-bottom: 24px;
-  box-shadow: 0 2px 12px rgba(13,17,23,.05);
+  background: linear-gradient(135deg, #f0fdf9, #ecfdf5);
+  border: 1.5px solid #6ee7b7;
+  border-radius: 18px;
+  padding: 15px 24px;
+  margin-bottom: 22px;
+  box-shadow: 0 4px 20px rgba(16,185,129,.1);
 }
+
 .lw-note-form__label {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 800;
-  color: #10b981;
+  color: #059669;
   text-transform: uppercase;
-  letter-spacing: .8px;
+  letter-spacing: 1px;
   margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
+
 .lw-note-textarea {
   width: 100%;
-  padding: 12px 14px;
-  border: 1.5px solid #e5eaf2;
-  border-radius: 10px;
-  font-size: 13px;
+  padding: 14px 16px;
+  border: 1.5px solid #a7f3d0;
+  border-radius: 12px;
+  font-size: 14px;
   color: #0d1117;
   font-family: inherit;
-  line-height: 1.6;
+  line-height: 1.65;
   resize: vertical;
   outline: none;
-  background: #fafbfc;
+  background: #fff;
   transition: border-color .2s, box-shadow .2s;
+  max-height: 90px;
 }
 .lw-note-textarea:focus {
   border-color: #10b981;
-  box-shadow: 0 0 0 3px rgba(16,185,129,.1);
-  background: #fff;
+  box-shadow: 0 0 0 3px rgba(16,185,129,.15);
 }
+.lw-note-textarea::placeholder { color: #9aa3b5; }
+
 .lw-note-form__footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: 12px;
+  /* margin-top: 14px; */
 }
-.lw-note-form__chars { font-size: 11px; color: #9aa3b5; }
+.lw-note-form__chars { font-size: 11px; color: #6ee7b7; font-weight: 600; }
 
-.lw-note-error {
-  font-size: 12px;
-  color: #dc2626;
-  margin: 6px 0 0;
-}
+.lw-note-error { font-size: 12px; color: #dc2626; margin: 6px 0 0; font-weight: 600; }
 
-.lw-notes__empty {
-  text-align: center;
-  padding: 50px 0;
-  color: #9aa3b5;
+.lw-btn-add-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 20px;
+  border-radius: 10px;
+  border: none;
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  box-shadow: 0 3px 14px rgba(16,185,129,.35);
+  transition: all .15s;
 }
-.lw-notes__empty-icon  { font-size: 40px; margin-bottom: 12px; }
+.lw-btn-add-note:hover:not(:disabled) { filter: brightness(1.08); transform: translateY(-1px); }
+.lw-btn-add-note:disabled             { opacity: .5; cursor: not-allowed; }
+
+/* ── Empty state ───────────────────────────────────────────────── */
+.lw-notes__empty { text-align: center; padding: 60px 0; color: #9aa3b5; }
+.lw-notes__empty-icon  { font-size: 48px; margin-bottom: 14px; }
 .lw-notes__empty-title { font-size: 16px; font-weight: 700; color: #5a6478; margin-bottom: 6px; }
 .lw-notes__empty-sub   { font-size: 13px; }
 
-.lw-notes__list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+/* ── Timeline ──────────────────────────────────────────────────── */
+.lw-timeline {
+  position: relative;
+  padding-left: 28px;
 }
 
-.lw-note-card {
+.lw-timeline::before {
+  content: '';
+  position: absolute;
+  left: 7px;
+  top: 8px;
+  bottom: 8px;
+  width: 2px;
+  background: linear-gradient(to bottom, #10b981 0%, #a7f3d0 60%, transparent 100%);
+  border-radius: 2px;
+}
+
+.lw-note-entry {
+  position: relative;
+  margin-bottom: 15px;
+  animation: noteSlideIn .25s ease both;
+}
+
+@keyframes noteSlideIn {
+  from { opacity: 0; transform: translateX(-8px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.lw-note-entry__dot {
+  position: absolute;
+  left: -24px;
+  top: 16px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #10b981;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 2px #a7f3d0;
+}
+
+.lw-note-entry__card {
   background: #fff;
   border: 1px solid #e5eaf2;
   border-radius: 14px;
-  padding: 18px 22px;
-  box-shadow: 0 2px 10px rgba(13,17,23,.05);
-  animation: slideIn .22s ease both;
+  padding: 0;
+  box-shadow: 0 2px 12px rgba(13,17,23,.06);
+  overflow: hidden;
+  transition: box-shadow .18s, transform .18s;
 }
-.lw-note-card__header {
+.lw-note-entry__card:hover {
+  box-shadow: 0 6px 20px rgba(16,185,129,.12);
+  transform: translateY(-1px);
+}
+.lw-note-entry__card::before {
+  content: '';
+  display: block;
+  height: 3px;
+  background: linear-gradient(90deg, #10b981, #34d399);
+  border-radius: 14px 14px 0 0;
+}
+
+.lw-note-entry__header {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 10px;
+  padding: 10px 14px 10px;
+  border-bottom: 1px solid #f1f5f9;
 }
-.lw-note-card__dot  { width: 8px; height: 8px; border-radius: 50%; background: #10b981; flex-shrink: 0; }
-.lw-note-card__num  { font-size: 11px; font-weight: 800; color: #10b981; text-transform: uppercase; letter-spacing: .5px; }
-.lw-note-card__time { font-size: 11px; color: #9aa3b5; margin-left: auto; }
-.lw-note-card__body { font-size: 14px; color: #5a6478; line-height: 1.7; margin: 0; padding-left: 18px; }
+
+.lw-note-entry__num {
+  font-size: 10px;
+  font-weight: 800;
+  color: #10b981;
+  text-transform: uppercase;
+  letter-spacing: .8px;
+  background: #ecfdf5;
+  padding: 3px 8px;
+  border-radius: 99px;
+}
+
+.lw-note-entry__date {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: #9aa3b5;
+  margin-left: auto;
+}
+
+.lw-note-entry__body {
+  padding: 10px 10px 10px;
+  font-size: 14px;
+  color: #374151;
+  line-height: 1.75;
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.lw-note-entry__expand {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  color: #10b981;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  padding: 0 18px 14px;
+  transition: opacity .15s;
+}
+.lw-note-entry__expand:hover { opacity: .75; }
+
+.lw-notes__toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 13px;
+  background: #f0fdf9;
+  border: 1.5px dashed #a7f3d0;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #10b981;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all .15s;
+  margin-top: 4px;
+}
+.lw-notes__toggle:hover {
+  background: #dcfce7;
+  border-color: #10b981;
+  border-style: solid;
+}
 
 /* ── Toast ─────────────────────────────────────────────────────── */
 .lw-toast {

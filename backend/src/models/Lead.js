@@ -1,13 +1,28 @@
 const mongoose = require('mongoose');
+
+// ── History sub-schema ────────────────────────────────────────────────────────
+const historySchema = new mongoose.Schema(
+  {
+    action:  {
+      type: String,
+      enum: ['created','info_updated','status_changed','assigned','unassigned',
+             'note_added','call_scheduled','call_completed'],
+      required: true,
+    },
+    by:      { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    at:      { type: Date, default: Date.now },
+    from:    String,   // statut précédent ou ancienne valeur
+    to:      String,   // nouveau statut ou nouvelle valeur
+    fields:  [String], // champs modifiés (info_updated)
+    preview: String,   // aperçu de la note (note_added)
+  },
+  { _id: false }
+);
+
+// ── Lead schema ───────────────────────────────────────────────────────────────
 const leadSchema = new mongoose.Schema(
   {
-    // leadNumber: {
-    //   type: String,
-    //   unique: true,
-    //   sparse: true,
-    // },
-
-    // Informations personnelles
+    // ── Informations personnelles ──────────────────────────────────────────
     firstName: {
       type: String,
       required: [true, 'First name is required'],
@@ -20,103 +35,77 @@ const leadSchema = new mongoose.Schema(
     },
     email: {
       type: String,
-      // required: [true, 'Email is required'],
       lowercase: true,
-      match: [/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/, 'Please provide a valid email'],
+      match: [/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/, 'Invalid email format'],
     },
     phone: {
-      required: [true, 'Phone number is required'],
       type: String,
+      required: [true, 'Phone number is required'],
       match: [/^[\d\s\-\+\(\)]+$/, 'Invalid phone number format'],
     },
 
-
-    // Localisation
-    address: String,
-    city: String,
-    region: String,
+    // ── Localisation ──────────────────────────────────────────────────────
+    address:    String,
+    city:       String,
+    region:     String,
     postalCode: String,
-    country: {
-      type: String,
-      default: 'Tunisie',
-    },
+    country:    { type: String, default: 'Tunisie' },
 
-    // Catégorisation
+    // ── Catégorisation ────────────────────────────────────────────────────
     source: {
       type: String,
       enum: ['Website', 'Referral', 'Phone', 'Email', 'Social Media', 'Other'],
       default: 'Other',
     },
+  
 
-    // Statut commercial
+    // ── Statut commercial ─────────────────────────────────────────────────
     status: {
       type: String,
       enum: ['New', 'Contacted', 'Interested', 'NotInterested', 'DealClosed', 'Lost'],
       default: 'New',
     },
     statusChangedAt: Date,
-    statusChangedBy: mongoose.Schema.Types.ObjectId,
+    statusChangedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
 
-    // Attribution
-    assignedTo: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-    },
+    // ── Attribution ───────────────────────────────────────────────────────
+    assignedTo: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     assignedAt: Date,
-    assignedBy: mongoose.Schema.Types.ObjectId,
+    assignedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
 
-    // Historique d'activités
-    
-    // Notes et commentaires
+    // ── Gestion des appels ────────────────────────────────────────────────
+    nextCallAt:   Date,
+    lastCalledAt: Date,
+    callsCount:   { type: Number, default: 0 },
+
+    // ── Notes ─────────────────────────────────────────────────────────────
     notes: [
       {
-        content: String,
-        createdBy: mongoose.Schema.Types.ObjectId,
-        createdAt: {
-          type: Date,
-          default: Date.now,
-        },
+        content:   String,
+        createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+        createdAt: { type: Date, default: Date.now },
       },
     ],
 
-    // Métadonnées
-    createdBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-    },
-    createdAt: {
-      type: Date,
-      default: Date.now,
-    },
-    updatedAt: {
-      type: Date,
-      default: Date.now,
-    },
-    isDeleted: {
-      type: Boolean,
-      default: false,
-    },
+    // ── Historique ────────────────────────────────────────────────────────
+    history: [historySchema],
+
+    // ── Métadonnées ───────────────────────────────────────────────────────
+    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    isDeleted: { type: Boolean, default: false },
     deletedAt: Date,
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
-// Index pour optimiser les requêtes
-leadSchema.index({ email: 1 });
+// ── Index ─────────────────────────────────────────────────────────────────────
+leadSchema.index({ email:      1 });
 leadSchema.index({ assignedTo: 1 });
-leadSchema.index({ status: 1 });
-leadSchema.index({ source: 1 });
-leadSchema.index({ createdAt: 1 });
+leadSchema.index({ status:     1 });
+leadSchema.index({ source:     1 });
+leadSchema.index({ nextCallAt: 1 });
+leadSchema.index({ createdAt:  1 });
 leadSchema.index({ updatedAt: -1 });
-leadSchema.index({ isDeleted: 1 });
-
-// leadSchema.pre('save', async function () {
-//   if (this.isNew && !this.leadNumber) {
-//     const count = await mongoose.model('Lead').countDocuments();
-//     this.leadNumber = `#${String(count + 1).padStart(5, '0')}`;  // → #00001
-//   }
-// });
+leadSchema.index({ isDeleted:  1 });
 
 module.exports = mongoose.model('Lead', leadSchema);
