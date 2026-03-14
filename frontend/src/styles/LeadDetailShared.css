@@ -1,0 +1,463 @@
+/* ================================================================
+   LeadDetailShared.css
+   Design partagé entre :
+   - LeadWorkPage (salesman)
+   - LeadDetailPage (sales-leader)
+   Basé sur le design CxpLeadDetail (cxp-det2-*)
+   ================================================================ */
+
+@keyframes ldshFadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Root ────────────────────────────────────────────────────────── */
+.ldsh-root {
+  display: flex; flex-direction: column;
+  min-height: 100vh;
+  font-family: 'DM Sans', sans-serif;
+}
+
+/* ── États chargement / erreur ───────────────────────────────────── */
+.ldsh-loading {
+  display: flex; align-items: center; justify-content: center; gap: 12px;
+  height: 300px; color: #64748b; font-size: 14px;
+}
+.ldsh-error {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 12px; height: 300px; color: #dc2626; font-size: 14px; text-align: center;
+}
+
+/* ── Hero ────────────────────────────────────────────────────────── */
+.ldsh-hero {
+  position: relative; overflow: hidden;
+  background: linear-gradient(160deg, #f0f9ff 0%, #ffffff 60%, #faf5ff 100%);
+  border-bottom: 1.5px solid #e0f2fe;
+}
+.ldsh-hero__blob {
+  position: absolute; top: -80px; right: -80px;
+  width: 300px; height: 300px; border-radius: 50%;
+  opacity: .07; filter: blur(50px); pointer-events: none;
+}
+.ldsh-hero__inner {
+  position: relative; padding: 24px 28px 0;
+  max-width: 1100px; ;
+}
+
+/* Topbar (pour sales-leader avec bouton supprimer) */
+.ldsh-hero__topbar {
+  display: flex; align-items: center;
+  justify-content: space-between; margin-bottom: 16px;
+}
+
+/* ── Bouton retour ───────────────────────────────────────────────── */
+.ldsh-back {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12px; font-weight: 600; color: #0ea5e9;
+  background: none; border: none; cursor: pointer;
+  padding: 0 0 16px; font-family: inherit; transition: gap .15s;
+}
+.ldsh-back:hover { gap: 10px; }
+
+/* Bouton supprimer (sales-leader) */
+.ldsh-delete-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12px; font-weight: 600; color: #dc2626;
+  background: #fff5f5; border: 1.5px solid #fca5a5;
+  border-radius: 8px; padding: 6px 12px;
+  cursor: pointer; font-family: inherit; transition: all .15s;
+}
+.ldsh-delete-btn:hover { background: #fef2f2; border-color: #dc2626; }
+
+/* ── Profil ──────────────────────────────────────────────────────── */
+.ldsh-profile {
+  display: flex; align-items: flex-start;
+  gap: 20px; margin-bottom: 20px; flex-wrap: wrap;
+}
+
+.ldsh-avatar {
+  width: 68px; height: 68px; border-radius: 18px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px; font-weight: 800; color: #fff;
+  box-shadow: 0 4px 20px rgba(0,0,0,.15);
+  font-family: 'Fraunces', serif;
+}
+
+.ldsh-identity { flex: 1; min-width: 0; }
+.ldsh-id {
+  font-size: 10px; font-weight: 800; letter-spacing: 1.2px;
+  color: #94a3b8; text-transform: uppercase; margin-bottom: 4px;
+  font-family: monospace;
+}
+.ldsh-name {
+  font-family: 'Fraunces', serif;
+  font-size: 24px; font-weight: 700; color: #0f172a;
+  margin: 0 0 4px; letter-spacing: -.3px;
+}
+.ldsh-meta {
+  font-size: 13px; color: #64748b;
+  display: flex; align-items: center; gap: 4px; margin-bottom: 2px;
+}
+
+/* Badges */
+.ldsh-badges { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.ldsh-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 4px 12px; border-radius: 99px;
+  font-size: 11px; font-weight: 700; border: 1.5px solid transparent;
+}
+.ldsh-badge__dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.ldsh-badge--source { background: #f1f5f9; color: #475569; border-color: #e2e8f0; }
+
+/* ── Panel statut (salesman) ─────────────────────────────────────── */
+.ldsh-status-panel {
+  background: rgba(15, 23, 42, .04);
+  color: #e31919;
+  border: 1.5px solid rgba(15, 23, 42, .08);
+  border-radius: 16px; padding: 16px 18px;
+  flex-shrink: 0; min-width: 200px; align-self: flex-start;
+}
+.ldsh-status-panel__label {
+  font-size: 10px; font-weight: 800; color: #64748b;
+  text-transform: uppercase; letter-spacing: .8px; margin-bottom: 10px;
+}
+.ldsh-status-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 6px;
+}
+.ldsh-status-btn {
+  display: flex; align-items: center; gap: 5px;
+  padding: 6px 10px; border-radius: 8px; border: 1.5px solid;
+  font-size: 11px; font-weight: 600; cursor: pointer;
+  font-family: inherit; transition: all .15s; white-space: nowrap;
+}
+.ldsh-status-btn:hover:not(:disabled) { transform: translateY(-1px); }
+.ldsh-status-btn:disabled { opacity: .6; cursor: not-allowed; }
+.ldsh-status-btn__dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+
+/* ── Card salesman assigné (sales-leader hero) ───────────────────── */
+.ldsh-agent-card {
+  background: rgba(15, 23, 42, .04);
+  border: 1.5px solid rgba(15, 23, 42, .08);
+  border-radius: 14px; padding: 14px 16px;
+  flex-shrink: 0; align-self: flex-start;
+}
+.ldsh-agent-card__label {
+  font-size: 10px; font-weight: 800; color: #64748b;
+  text-transform: uppercase; letter-spacing: .8px;
+  margin-bottom: 10px; display: flex; align-items: center; gap: 4px;
+}
+.ldsh-agent {
+  display: flex; align-items: center; gap: 10px;
+}
+.ldsh-agent__av {
+  width: 36px; height: 36px; border-radius: 9px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 800; color: #fff;
+}
+.ldsh-agent__name { font-size: 13px; font-weight: 700; color: #1e293b; }
+.ldsh-agent__role { font-size: 11px; color: #94a3b8; margin-top: 1px; }
+.ldsh-agent--empty { font-size: 12px; color: #94a3b8; font-style: italic; }
+
+/* ── Tabs ────────────────────────────────────────────────────────── */
+.ldsh-tabs {
+  display: flex; gap: 2px;
+  border-top: 1px solid rgba(15, 23, 42, .07);
+  margin-top: 4px; padding: 0 2px;
+}
+.ldsh-tab {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 13px 18px 12px;
+  background: none; border: none;
+  border-bottom: 2.5px solid transparent;
+  margin-bottom: -1px;
+  color: #64748b; font-size: 13px; font-weight: 600;
+  cursor: pointer; font-family: inherit;
+  transition: all .14s; white-space: nowrap;
+}
+.ldsh-tab:hover       { color: #0ea5e9; }
+.ldsh-tab--active     { color: #0ea5e9; border-bottom-color: #0ea5e9; }
+
+/* ── Content ─────────────────────────────────────────────────────── */
+.ldsh-content {
+  padding: 24px 28px 60px;
+  max-width: 1100px;  width: 100%;
+}
+
+/* ── Bento grid ──────────────────────────────────────────────────── */
+.ldsh-bento {
+  display: grid; grid-template-columns: 2fr 1fr; gap: 16px;
+  animation: ldshFadeUp .25s ease both;
+}
+
+/* ── Cards ───────────────────────────────────────────────────────── */
+.ldsh-card {
+  background: #fff; border-radius: 16px; padding: 20px 22px;
+  border: 1.5px solid #e2e8f0;
+  box-shadow: 0 2px 10px rgba(0,0,0,.04);
+}
+.ldsh-card--wide  { grid-column: 1 / -1; }
+.ldsh-card--accent {
+  background: linear-gradient(135deg, #f0f9ff, #faf5ff);
+  border-color: #bae6fd;
+}
+.ldsh-card__label {
+  font-size: 10px; font-weight: 800; color: #94a3b8;
+  text-transform: uppercase; letter-spacing: 1px; margin-bottom: 14px;
+}
+
+/* ── Info grid (inside cards) ────────────────────────────────────── */
+.ldsh-info-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px 16px;
+}
+.ldsh-info-row   { display: flex; align-items: flex-start; gap: 10px; }
+.ldsh-info-icon  { font-size: 14px; margin-top: 2px; flex-shrink: 0; }
+.ldsh-info-label {
+  font-size: 10px; font-weight: 700; color: #94a3b8;
+  text-transform: uppercase; letter-spacing: .7px; margin-bottom: 2px;
+}
+.ldsh-info-value { font-size: 13px; font-weight: 500; color: #1e293b; }
+
+/* ── Status display (read-only) ──────────────────────────────────── */
+.ldsh-status-display {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 8px 16px; border-radius: 10px; border: 1.5px solid;
+  margin-bottom: 8px;
+}
+.ldsh-readonly-hint {
+  font-size: 11px; color: #94a3b8; margin: 4px 0 0;
+  display: flex; align-items: center; gap: 4px;
+}
+
+/* ── Note rapide (overview) ──────────────────────────────────────── */
+.ldsh-quick-textarea {
+  width: 100%; padding: 10px 12px; border: 1.5px solid #e2e8f0;
+  border-radius: 10px; font-size: 13px; font-family: inherit;
+  color: #0f172a; background: #fafbfc; resize: vertical; outline: none;
+  transition: border-color .15s, box-shadow .15s; margin-bottom: 8px;
+}
+.ldsh-quick-textarea:focus {
+  border-color: #0ea5e9; box-shadow: 0 0 0 3px rgba(14,165,233,.1); background: #fff;
+}
+.ldsh-quick-textarea:disabled { opacity: .55; cursor: not-allowed; }
+
+.ldsh-last-note {
+  font-size: 13px; color: #475569; line-height: 1.65;
+  margin: 0 0 10px; white-space: pre-wrap;
+}
+.ldsh-last-note-footer {
+  display: flex; align-items: center; justify-content: space-between;
+}
+.ldsh-last-note-date {
+  font-size: 11px; color: #94a3b8; display: flex; align-items: center; gap: 4px;
+}
+.ldsh-link-btn {
+  background: none; border: none; color: #0ea5e9;
+  font-size: 12px; font-weight: 700; cursor: pointer; padding: 0;
+  font-family: inherit;
+}
+.ldsh-link-btn:hover { opacity: .75; }
+
+/* ── Notes overview ──────────────────────────────────────────────── */
+.ldsh-overview-notes { display: flex; flex-direction: column; gap: 10px; }
+.ldsh-overview-note  { display: flex; gap: 10px; }
+.ldsh-overview-note__dot {
+  width: 8px; height: 8px; border-radius: 50%; background: #0ea5e9;
+  flex-shrink: 0; margin-top: 4px;
+}
+.ldsh-overview-note__body { flex: 1; min-width: 0; }
+.ldsh-overview-note__text {
+  font-size: 13px; color: #475569; line-height: 1.55; margin: 0 0 3px;
+}
+.ldsh-overview-note__date {
+  font-size: 10px; color: #94a3b8; display: flex; align-items: center; gap: 3px;
+}
+
+/* ── Notes tab ───────────────────────────────────────────────────── */
+.ldsh-notes-tab     { animation: ldshFadeUp .25s ease both; }
+.ldsh-section-header { margin-bottom: 18px; }
+.ldsh-section-header h2 {
+  font-size: 18px; font-weight: 800; color: #0f172a;
+  font-family: 'Fraunces', serif; margin: 0 0 4px;
+}
+.ldsh-section-header p { font-size: 13px; color: #64748b; margin: 0; }
+
+.ldsh-readonly-badge {
+  font-size: 11px; font-weight: 700; color: #64748b;
+  background: #f1f5f9; padding: 3px 10px; border-radius: 99px;
+  border: 1px solid #e2e8f0;
+}
+
+.ldsh-note-form-card { margin-bottom: 14px; }
+.ldsh-note-textarea {
+  width: 100%; padding: 10px 12px; border: 1.5px solid #e2e8f0;
+  border-radius: 10px; font-size: 13px; font-family: inherit;
+  color: #0f172a; background: #fafbfc; resize: vertical; outline: none;
+  transition: border-color .15s, box-shadow .15s;
+  margin-bottom: 8px;
+}
+.ldsh-note-textarea:focus {
+  border-color: #0ea5e9; box-shadow: 0 0 0 3px rgba(14,165,233,.1); background: #fff;
+}
+.ldsh-note-textarea:disabled { opacity: .55; cursor: not-allowed; }
+.ldsh-note-form-footer {
+  display: flex; align-items: center; justify-content: space-between;
+}
+.ldsh-chars        { font-size: 11px; color: #94a3b8; }
+.ldsh-note-error   { font-size: 12px; color: #dc2626; margin: 4px 0 0; }
+
+/* Timeline notes */
+.ldsh-timeline {
+  display: flex; flex-direction: column; gap: 12px; margin-bottom: 12px;
+}
+.ldsh-note-entry {
+  display: flex; gap: 12px; align-items: flex-start;
+  animation: ldshFadeUp .2s ease both;
+}
+.ldsh-note-entry__dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: #0ea5e9; flex-shrink: 0; margin-top: 5px;
+  border: 2px solid #e0f2fe;
+}
+.ldsh-note-entry__card {
+  flex: 1; background: #fff; border: 1px solid #e2e8f0;
+  border-radius: 12px; padding: 12px 16px;
+  box-shadow: 0 1px 6px rgba(0,0,0,.04);
+}
+.ldsh-note-entry__header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 6px;
+}
+.ldsh-note-entry__num {
+  font-size: 10px; font-weight: 800; color: #0ea5e9;
+  background: #f0f9ff; padding: 2px 8px; border-radius: 99px;
+}
+.ldsh-note-entry__date {
+  font-size: 11px; color: #94a3b8;
+  display: flex; align-items: center; gap: 3px;
+}
+.ldsh-note-entry__body {
+  font-size: 13px; color: #374151; line-height: 1.65;
+  margin: 0; white-space: pre-wrap; word-break: break-word;
+}
+.ldsh-note-entry__expand {
+  background: none; border: none; color: #0ea5e9;
+  font-size: 12px; font-weight: 600; cursor: pointer;
+  margin-top: 6px; padding: 0; font-family: inherit;
+}
+
+/* ── Edit tab ────────────────────────────────────────────────────── */
+.ldsh-edit-tab { animation: ldshFadeUp .25s ease both; }
+.ldsh-edit-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px 20px; margin-bottom: 22px;
+}
+.ldsh-field { display: flex; flex-direction: column; gap: 5px; }
+.ldsh-field--full { grid-column: 1 / -1; }
+.ldsh-field__label {
+  font-size: 11px; font-weight: 700; color: #64748b;
+  text-transform: uppercase; letter-spacing: .5px;
+}
+.ldsh-field__input {
+  padding: 10px 13px; border: 1.5px solid #e2e8f0; border-radius: 10px;
+  font-size: 13px; color: #0f172a; background: #fafbfc;
+  font-family: inherit; outline: none;
+  transition: border-color .15s, box-shadow .15s;
+}
+.ldsh-field__input:focus {
+  border-color: #0ea5e9; box-shadow: 0 0 0 3px rgba(14,165,233,.1); background: #fff;
+}
+.ldsh-field__input:disabled { opacity: .55; cursor: not-allowed; background: #f1f5f9; }
+.ldsh-edit-actions {
+  display: flex; align-items: center; justify-content: flex-end; gap: 10px;
+  padding-top: 18px; border-top: 1.5px solid #f1f5f9;
+}
+
+/* ── Buttons ─────────────────────────────────────────────────────── */
+.ldsh-btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 9px 18px; border-radius: 10px;
+  font-size: 13px; font-weight: 600; font-family: inherit;
+  cursor: pointer; transition: all .15s; border: none;
+}
+.ldsh-btn--primary {
+  background: linear-gradient(135deg, #0ea5e9, #0284c7);
+  color: #fff; box-shadow: 0 3px 10px rgba(14,165,233,.3);
+}
+.ldsh-btn--primary:hover:not(:disabled) { filter: brightness(1.07); transform: translateY(-1px); }
+.ldsh-btn--primary:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+.ldsh-btn--ghost {
+  background: #fff; border: 1.5px solid #e2e8f0; color: #64748b;
+}
+.ldsh-btn--ghost:hover { border-color: #0ea5e9; color: #0ea5e9; background: #f0f9ff; }
+.ldsh-btn--danger {
+  background: #fef2f2; border: 1.5px solid #fca5a5; color: #dc2626;
+}
+.ldsh-btn--danger:hover:not(:disabled) { background: #dc2626; color: #fff; border-color: #dc2626; }
+.ldsh-btn--danger:disabled { opacity: .6; cursor: not-allowed; }
+.ldsh-btn--full { width: 100%; justify-content: center; margin-top: 8px; }
+
+/* ── Messages feedback ───────────────────────────────────────────── */
+.ldsh-success-msg {
+  padding: 10px 14px; background: #f0fdf4; border: 1px solid #bbf7d0;
+  border-radius: 10px; color: #059669; font-size: 13px; font-weight: 600;
+  margin-bottom: 14px;
+}
+.ldsh-error-msg {
+  padding: 10px 14px; background: #fef2f2; border: 1px solid #fecaca;
+  border-radius: 10px; color: #dc2626; font-size: 13px;
+  margin-bottom: 14px;
+}
+
+/* ── Empty state ─────────────────────────────────────────────────── */
+.ldsh-empty { text-align: center; padding: 50px 0; color: #94a3b8; }
+.ldsh-empty__icon  { font-size: 40px; margin-bottom: 12px; }
+.ldsh-empty__title { font-size: 15px; font-weight: 700; color: #475569; margin-bottom: 6px; }
+.ldsh-empty__sub   { font-size: 13px; }
+
+/* ── Toast ───────────────────────────────────────────────────────── */
+.ldsh-toast {
+  position: fixed; bottom: 28px; right: 28px; z-index: 9999;
+  display: flex; align-items: center; gap: 8px;
+  padding: 12px 20px; border-radius: 12px;
+  font-size: 13px; font-weight: 600; font-family: 'DM Sans', sans-serif;
+  box-shadow: 0 8px 30px rgba(0,0,0,.15);
+  animation: ldshFadeUp .25s ease both;
+}
+.ldsh-toast--success { background: #0f172a; color: #f0f9ff; }
+.ldsh-toast--error   { background: #dc2626; color: #fff; }
+
+/* ── Delete modal ────────────────────────────────────────────────── */
+.ldsh-modal-overlay {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(15,23,42,.5); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+}
+.ldsh-modal {
+  background: #fff; border-radius: 20px;
+  padding: 32px 28px; max-width: 380px; width: 90%; text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,.2);
+  animation: ldshFadeUp .2s ease both;
+}
+.ldsh-modal__icon  { font-size: 40px; margin-bottom: 12px; }
+.ldsh-modal__title { font-size: 18px; font-weight: 800; color: #0f172a; margin: 0 0 8px; }
+.ldsh-modal__desc  { font-size: 13px; color: #64748b; line-height: 1.6; margin: 0 0 20px; }
+.ldsh-modal__actions { display: flex; gap: 10px; justify-content: center; }
+
+/* ── Responsive ──────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .ldsh-bento               { grid-template-columns: 1fr; }
+  .ldsh-card--wide          { grid-column: auto; }
+  .ldsh-info-grid           { grid-template-columns: repeat(2, 1fr); }
+  .ldsh-hero__inner         { padding: 16px 20px 0; }
+  .ldsh-content             { padding: 20px 20px 40px; }
+}
+@media (max-width: 600px) {
+  .ldsh-name                { font-size: 20px; }
+  .ldsh-hero__inner         { padding: 14px 16px 0; }
+  .ldsh-content             { padding: 16px 16px 30px; }
+  .ldsh-info-grid           { grid-template-columns: 1fr 1fr; }
+  .ldsh-edit-grid           { grid-template-columns: 1fr; }
+  .ldsh-status-grid         { grid-template-columns: 1fr; }
+  .ldsh-tab                 { font-size: 12px; padding: 11px 12px; }
+  .ldsh-profile             { flex-direction: column; }
+  .ldsh-status-panel        { width: 100%; min-width: unset; }
+}

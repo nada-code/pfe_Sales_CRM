@@ -1,4 +1,5 @@
 const Lead     = require('../models/Lead');
+const Deal     = require('../models/Deal');
 const User     = require('../models/User');
 const mongoose = require('mongoose');
 const { notify, notifyMany } = require('../services/notificationService');
@@ -79,7 +80,7 @@ exports.getAllLeads = async (req, res) => {
     if (source) query.source = source;
 
     // CXP only sees DealClosed leads (can filter by other statuses too)
-    if (req.user.role === 'CXP') {
+    if (req.user.role === 'cxp') {
       query.status = status || 'DealClosed';
     } else {
       if (status) query.status = status;
@@ -140,6 +141,15 @@ exports.updateLead = async (req, res) => {
 
       const lead = await Lead.findOne({ _id: req.params.id, assignedTo: req.user.id, isDeleted: false });
       if (!lead) return res.status(403).json({ message: 'Lead not found or not assigned to you' });
+
+    } else if (req.user.role === 'cxp') {
+      // CXP peut modifier les infos de contact uniquement sur les leads DealClosed
+      const lead = await Lead.findOne({ _id: req.params.id, status: 'DealClosed', isDeleted: false });
+      if (!lead) return res.status(403).json({ message: 'Lead not found or not in DealClosed status' });
+
+      const { firstName, lastName, email, phone, address, city, region, postalCode, country } = req.body;
+      allowedFields = { firstName, lastName, email, phone, address, city, region, postalCode, country };
+
     } else {
       allowedFields = { ...req.body };
     }
@@ -169,6 +179,18 @@ exports.updateLead = async (req, res) => {
         type:    'lead_edited_by_salesman',
         title:   'Lead modifié par un commercial',
         message: `${byName} a modifié les informations du lead ${name}.`,
+        meta,
+      });
+    }
+
+    // ── CXP édite → notifier tous les Sales Leaders ──────────────────────────
+    if (req.user.role === 'cxp') {
+      const leaders = await getSalesLeaders();
+      await notifyMany(io, leaders.map((l) => l._id), {
+        sentBy:  req.user.id,
+        type:    'lead_edited_by_cxp',
+        title:   'Lead modifié par CXP',
+        message: `${byName} (CXP) a modifié les informations du lead ${name}.`,
         meta,
       });
     }
@@ -324,13 +346,18 @@ exports.changeStatus = async (req, res) => {
           message: `Le lead ${name} a été closed par ${byName}.`,
           meta:    { leadId: lead._id, leadName: name, salesmanName: byName, leadStatus: status },
         });
-        // Deal Closed → CXP doit confirmer
+        // Créer automatiquement un Deal En_Attente
+        const existingDeal = await Deal.findOne({ lead: lead._id });
+        if (!existingDeal) {
+          await Deal.create({ lead: lead._id, status: 'En_Attente', createdBy: req.user.id });
+        }
+        // Notifier CXP
         const cxp = await getCxpAgents();
         await notifyMany(io, cxp.map((c) => c._id), {
           sentBy:  req.user.id,
           type:    'deal_to_confirm',
-          title:   'Nouveau deal à confirmer',
-          message: `Le lead ${name} est passé en Deal Closed. Veuillez confirmer la commande.`,
+          title:   '🆕 Nouveau deal à traiter',
+          message: `Le lead ${name} est passé en Deal Closed. Traitez le deal.`,
           meta:    { leadId: lead._id, leadName: name, salesmanName: byName },
         });
       } else {

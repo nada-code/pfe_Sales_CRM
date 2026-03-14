@@ -19,7 +19,7 @@ import SalesLeaderTeam      from './pages/sales-leader/leadsManagement';
 import SalesLeaderApprovals from './pages/sales-leader/Approvals';
 import LeadDetailPage       from './pages/sales-leader/LeadDetailPage';
 // import DailyCallsPage      from './pages/sales-leader/DailyCallsPage';
-import SalesLeaderReminders from './pages/sales-leader/SalesLeaderReminders';
+// import SalesLeaderReminders from './pages/sales-leader/SalesLeaderReminders';
 
 // ── Salesman pages ───────────────────────────────────────────────────────────
 import MyLeads      from './pages/salesman/MyLeads';
@@ -28,7 +28,10 @@ import SalesmanDashboard from './pages/salesman/SalesmanDashboard';
 // import MyCallsPage  from './pages/salesman/MyCallsPage';
 
 // ── CXP pages ────────────────────────────────────────────────────────────────
-import DashbordCxp from './pages/Cxp/DashbordCxp';
+import DashbordCxp       from './pages/Cxp/DashbordCxp';
+import CxpDeals          from './pages/Cxp/CxpDeals';
+import CxpLeadDetailPage from './pages/Cxp/CxpLeadDetailPage';
+import CxpDeliveries     from './pages/Cxp/CxpDeliveries';
 
   import ProfilePage from './pages/Profile/ProfilePage';
 
@@ -94,8 +97,17 @@ export default function App() {
               <Route path="/cxp/dashboard"
                 element={<ProtectedRoute allowedRoles={['cxp']}>{W(DashbordCxp)}</ProtectedRoute>}
               />
+              <Route path="/cxp/deals"
+                element={<ProtectedRoute allowedRoles={['cxp']}>{W(CxpDeals)}</ProtectedRoute>}
+              />
+              <Route path="/cxp/leads/:id"
+                element={<ProtectedRoute allowedRoles={['cxp']}>{W(CxpLeadDetailPage)}</ProtectedRoute>}
+              />
+              <Route path="/cxp/deliveries"
+                element={<ProtectedRoute allowedRoles={['cxp']}>{W(CxpDeliveries)}</ProtectedRoute>}
+              />
 
-*              {/* ── Profile — all roles ── */}
+              {/* ── Profile — all roles ── */}
               <Route path="/sales-leader/profile"
                 element={<ProtectedRoute allowedRoles={['sales_leader']}>{W(ProfilePage)}</ProtectedRoute>}
               />

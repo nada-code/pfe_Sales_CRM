@@ -1,0 +1,98 @@
+/* ================================================================
+   CxpDeliveries.css — CXP Deliveries Tracking Page
+   ================================================================ */
+
+.cxp-del-root {
+  display: flex; flex-direction: column; gap: 20px;
+  font-family: 'DM Sans', sans-serif;
+  animation: cxpDelFade .35s ease both;
+}
+@keyframes cxpDelFade {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Header ── */
+.cxp-del-header {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
+}
+.cxp-del-header__eyebrow {
+  font-size: 10px; font-weight: 800; letter-spacing: 1.2px;
+  text-transform: uppercase; color: #0ea5e9; margin-bottom: 4px;
+}
+.cxp-del-header__title {
+  font-family: 'Fraunces', serif; font-size: 24px; font-weight: 700; margin: 0 0 4px;
+  background: linear-gradient(135deg, #0f172a, #0ea5e9);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.cxp-del-header__sub { font-size: 13px; color: #94a3b8; margin: 0; }
+
+/* ── Buttons ── */
+.cxp-del-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 9px 16px; border-radius: 10px; font-size: 13px; font-weight: 600;
+  font-family: inherit; cursor: pointer; transition: all .18s; border: none;
+}
+.cxp-del-btn--ghost {
+  background: #fff; border: 1.5px solid #e2e8f0; color: #64748b;
+}
+.cxp-del-btn--ghost:hover { border-color: #0ea5e9; color: #0ea5e9; background: #f0f9ff; }
+.cxp-del-btn--primary {
+  background: linear-gradient(135deg, #0ea5e9, #0284c7);
+  color: #fff; box-shadow: 0 3px 12px rgba(14,165,233,.3);
+}
+.cxp-del-btn--sm {
+  padding: 5px 12px; font-size: 11px; border-radius: 8px;
+  background: #f8fafc; border: 1.5px solid #e2e8f0; color: #475569;
+}
+.cxp-del-btn--sm:hover:not(:disabled) { border-color: #0ea5e9; color: #0ea5e9; background: #f0f9ff; }
+.cxp-del-btn--sm:disabled { opacity: .5; cursor: not-allowed; }
+.cxp-del-btn--detail {
+  background: #f0f9ff; border: 1.5px solid #bae6fd; color: #0284c7;
+}
+
+/* ── Stats filter bar ── */
+.cxp-del-stats { display: flex; gap: 10px; flex-wrap: wrap; }
+.cxp-del-stat {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 16px; border-radius: 10px; font-size: 12px; font-weight: 600; color: #475569;
+  background: #fff; border: 1.5px solid #f1f5f9; cursor: pointer; transition: all .17s;
+}
+.cxp-del-stat:hover { border-color: #94a3b8; }
+.cxp-del-stat.active { font-weight: 700; box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+.cxp-del-stat__count { font-size: 16px; font-weight: 800; color: #1e293b; }
+.cxp-del-stat__label { color: #64748b; }
+
+/* ── Empty ── */
+.cxp-del-empty {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 60px 20px; text-align: center;
+}
+.cxp-del-empty__icon { font-size: 48px; margin-bottom: 16px; }
+.cxp-del-empty__title { font-size: 16px; font-weight: 700; color: #1e293b; margin: 0 0 6px; }
+.cxp-del-empty__sub   { font-size: 13px; color: #94a3b8; margin: 0 0 20px; }
+
+/* ── List ── */
+.cxp-del-list { display: flex; flex-direction: column; gap: 10px; }
+.cxp-del-item {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
+  background: #fff; border: 1.5px solid #f1f5f9; border-radius: 14px;
+  padding: 16px 20px; box-shadow: 0 1px 4px rgba(0,0,0,.04);
+  transition: all .17s; flex-wrap: wrap;
+}
+.cxp-del-item:hover { border-color: #bae6fd; box-shadow: 0 4px 16px rgba(0,0,0,.07); }
+
+.cxp-del-item__left { display: flex; flex-direction: column; gap: 4px; }
+.cxp-del-item__company { font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: .7px; }
+.cxp-del-item__name  { font-size: 15px; font-weight: 700; color: #1e293b; }
+.cxp-del-item__track { font-size: 13px; font-family: monospace; color: #5b21b6; font-weight: 600; }
+.cxp-del-item__updated { font-size: 11px; color: #94a3b8; display: flex; align-items: center; gap: 4px; }
+
+.cxp-del-item__right { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
+.cxp-del-item__status {
+  font-size: 11px; font-weight: 700; padding: 5px 12px; border-radius: 20px;
+}
+.cxp-del-item__actions { display: flex; gap: 8px; }
+
+.spin { animation: spin .7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }

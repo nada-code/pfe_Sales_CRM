@@ -1,20 +1,19 @@
-import { LayoutDashboard, Users, ClipboardList, Phone, BellRing, CheckCircle2 } from 'lucide-react';
+import { LayoutDashboard, Users, ClipboardList, Phone, CheckCircle2, Truck } from 'lucide-react';
 
 export const ROLE_NAV = {
   sales_leader: [
     { label: "Dashboard",        icon: LayoutDashboard, path: "/sales-leader/dashboard"        },
     { label: "Leads Management", icon: Users,           path: "/sales-leader/leads-management" },
     { label: "Approvals",        icon: ClipboardList,   path: "/sales-leader/approvals"        },
-    // { label: "Rappels leads",    icon: BellRing,        path: "/sales-leader/reminders"        },
   ],
   cxp: [
-    { label: 'Dashboard', icon: LayoutDashboard, path: '/cxp/dashboard' },
-    { label: 'Deals',     icon: CheckCircle2,    path: '/cxp/deals'     },
+    { label: 'Dashboard',  icon: LayoutDashboard, path: '/cxp/dashboard'  },
+    { label: 'Deals',      icon: CheckCircle2,    path: '/cxp/deals'      },
+    { label: 'Livraisons', icon: Truck,           path: '/cxp/deliveries' },
   ],
   salesman: [
     { label: 'Dashboard', icon: LayoutDashboard, path: '/salesman/dashboard' },
     { label: 'My Leads',  icon: Phone,           path: '/salesman/prospects' },
-  
   ],
 };
 

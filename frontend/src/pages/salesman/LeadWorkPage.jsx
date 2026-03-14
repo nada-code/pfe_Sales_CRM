@@ -1,21 +1,31 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-
 import {
-  fetchLeadById,
-  updateLead,
+  fetchLeadById, updateLead,
   changeStatus as apiChangeStatus,
   addNote as apiAddNote,
-} from "../../api/leadsApi";
-import { useSocket } from "../../context/SocketContext";
-import { STATUS_CFG, SOURCE_CFG } from "../../config/leadsConfig";
-import { fmtDate, fmtTime, acolor } from "../../utils/leadsUtils";
-import { Spinner } from "../../components/UI";
-import "../../styles/leads.css";
-import "../../styles/SalesmanLeads.css";
+} from '../../api/leadsApi';
+import { useSocket } from '../../context/SocketContext';
+import { STATUS_CFG, SOURCE_CFG } from '../../config/leadsConfig';
+import { fmtDate, fmtTime, acolor } from '../../utils/leadsUtils';
+import { Spinner } from '../../components/UI';
+import {
+  ArrowLeft, FileText, Edit3, MessageSquare, Save, X,
+  Clock, MapPin, RefreshCw, CheckCircle2, ChevronDown, ChevronUp,
+} from 'lucide-react';
+import '../../styles/LeadDetailShared.css';
 
+const NOTES_PREVIEW = 3;
+const NOTE_TRUNCATE = 140;
 
-
+const EDITABLE_FIELDS = [
+  { f: 'firstName', l: 'Prénom *',    p: 'Prénom',        t: 'text'  },
+  { f: 'lastName',  l: 'Nom *',       p: 'Nom',           t: 'text'  },
+  { f: 'email',     l: 'Email',       p: 'email@ex.com',  t: 'email' },
+  { f: 'phone',     l: 'Téléphone *', p: '+216 xx xxx xxx', t: 'tel' },
+  { f: 'city',      l: 'Ville',       p: 'Ville',         t: 'text'  },
+  { f: 'country',   l: 'Pays',        p: 'Pays',          t: 'text'  },
+];
 
 export default function LeadWorkPage() {
   const { id }         = useParams();
@@ -23,53 +33,52 @@ export default function LeadWorkPage() {
   const [searchParams] = useSearchParams();
   const socket         = useSocket();
 
-  const [tab,          setTab]          = useState(searchParams.get("tab") || "overview");
-  const [lead,         setLead]         = useState(null);
-  const [loading,      setLoading]      = useState(true);
-  const [error,        setError]        = useState(null);
+  const [tab,           setTab]           = useState(searchParams.get('tab') || 'overview');
+  const [lead,          setLead]          = useState(null);
+  const [loading,       setLoading]       = useState(true);
+  const [error,         setError]         = useState(null);
+
+  // Status
   const [statusSaving, setStatusSaving] = useState(false);
-  const [noteText,     setNoteText]     = useState("");
-  const [noteSaving,   setNoteSaving]   = useState(false);
-  const [noteError,    setNoteError]    = useState("");
+
+  // Notes
+  const [noteText,      setNoteText]      = useState('');
+  const [noteSaving,    setNoteSaving]    = useState(false);
+  const [noteError,     setNoteError]     = useState('');
   const [notesExpanded, setNotesExpanded] = useState(false);
   const [expandedNote,  setExpandedNote]  = useState(null);
+  const noteRef = useRef(null);
 
-  const [toast,        setToast]        = useState(null);
-
-  // Edit tab state
+  // Edit
   const [editData,  setEditData]  = useState(null);
   const [saving,    setSaving]    = useState(false);
-  const [saveError, setSaveError] = useState("");
+  const [saveError, setSaveError] = useState('');
+  const [saveOk,    setSaveOk]    = useState('');
 
-
-  const noteRef = useRef(null);
-const NOTES_PREVIEW = 2;
-const NOTE_TRUNCATE = 120;
-const visibleNotes = lead?.notes
-    ? notesExpanded ? lead.notes : lead.notes.slice(-NOTES_PREVIEW)
-    : [];
-  const showToast = (msg, type = "success") => {
+  // Toast
+  const [toast, setToast] = useState(null);
+  const showToast = (msg, type = 'success') => {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 3000);
   };
 
-  // ── Loader ──────────────────────────────────────────────────────────────────
+  // ── Load ──────────────────────────────────────────────────────────────────
   const load = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
     try {
       const data = await fetchLeadById(id);
       setLead(data);
       setEditData({
-        firstName: data.firstName || "",
-        lastName:  data.lastName  || "",
-        email:     data.email     || "",
-        phone:     data.phone     || "",
-        city:      data.city      || "",
-        country:   data.country   || "",
-        source:    data.source    || "Other",
+        firstName: data.firstName || '',
+        lastName:  data.lastName  || '',
+        email:     data.email     || '',
+        phone:     data.phone     || '',
+        city:      data.city      || '',
+        country:   data.country   || '',
+        source:    data.source    || 'Other',
       });
     } catch (e) {
-      setError(e?.response?.data?.message || e.message || "Failed to load");
+      setError(e?.response?.data?.message || e.message || 'Erreur de chargement');
     } finally {
       if (!silent) setLoading(false);
     }
@@ -77,137 +86,143 @@ const visibleNotes = lead?.notes
 
   useEffect(() => { load(); }, [load]);
 
-  // ── Socket: update this lead in real-time ────────────────────────────────
   useEffect(() => {
     if (!socket) return;
-    const handler = (updatedLead) => {
-      if (updatedLead._id === id) {
-        setLead(updatedLead);
+    const handler = (u) => {
+      if (String(u._id) === id) {
+        setLead(u);
         setEditData({
-          firstName: updatedLead.firstName || "",
-          lastName:  updatedLead.lastName  || "",
-          email:     updatedLead.email     || "",
-          phone:     updatedLead.phone     || "",
-          city:      updatedLead.city      || "",
-          country:   updatedLead.country   || "",
-          source:    updatedLead.source    || "Other",
+          firstName: u.firstName || '', lastName: u.lastName  || '',
+          email:     u.email     || '', phone:    u.phone     || '',
+          city:      u.city      || '', country:  u.country   || '',
+          source:    u.source    || 'Other',
         });
       }
     };
-    socket.on("lead:updated", handler);
-    return () => socket.off("lead:updated", handler);
+    socket.on('lead:updated', handler);
+    return () => socket.off('lead:updated', handler);
   }, [socket, id]);
 
   useEffect(() => {
-    if (tab === "notes") setTimeout(() => noteRef.current?.focus(), 100);
-    if (tab !== "edit")  setSaveError("");
+    if (tab === 'notes') setTimeout(() => noteRef.current?.focus(), 100);
+    if (tab !== 'edit')  setSaveError('');
   }, [tab]);
 
-  // ── Status change ──────────────────────────────────────────────────────────
+  // ── Handlers ──────────────────────────────────────────────────────────────
   async function handleStatusChange(newStatus) {
     if (newStatus === lead.status || statusSaving) return;
     setStatusSaving(true);
     try {
       await apiChangeStatus(lead._id, newStatus);
-      showToast(`Status → ${STATUS_CFG[newStatus]?.label}`);
+      showToast(`Statut → ${STATUS_CFG[newStatus]?.label}`);
     } catch (e) {
-      showToast(e?.response?.data?.message || "Failed to update status", "error");
+      showToast(e?.response?.data?.message || 'Erreur', 'error');
     } finally { setStatusSaving(false); }
   }
 
-  // ── Add note ───────────────────────────────────────────────────────────────
   async function handleAddNote() {
-    if (!noteText.trim()) { setNoteError("Note cannot be empty."); return; }
-    setNoteSaving(true); setNoteError("");
+    if (!noteText.trim()) { setNoteError('La note ne peut pas être vide.'); return; }
+    setNoteSaving(true); setNoteError('');
     try {
       await apiAddNote(lead._id, noteText.trim());
-      setNoteText("");
-      showToast("Note added ✓");
+      setNoteText('');
+      showToast('Note ajoutée ✓');
+      load(true);
     } catch (e) {
-      setNoteError(e?.response?.data?.message || "Failed to add note");
+      setNoteError(e?.response?.data?.message || 'Erreur');
     } finally { setNoteSaving(false); }
   }
 
-  // ── Save edit ──────────────────────────────────────────────────────────────
   async function handleSaveEdit() {
-    if (!editData.firstName || !editData.lastName || !editData.email) {
-      setSaveError("First name, last name and email are required.");
+    if (!editData.firstName || !editData.lastName || !editData.phone) {
+      setSaveError('Prénom, nom et téléphone sont requis.');
       return;
     }
-    setSaving(true); setSaveError("");
+    setSaving(true); setSaveError(''); setSaveOk('');
     try {
-      // Server will broadcast lead:updated via socket — state updates automatically
       await updateLead(lead._id, editData);
-      setTab("overview");
-      showToast("Lead updated ✓");
+      setSaveOk('✓ Informations mises à jour');
+      setTimeout(() => setSaveOk(''), 4000);
+      showToast('Lead mis à jour ✓');
     } catch (e) {
-      setSaveError(e?.response?.data?.message || "Failed to save changes");
+      setSaveError(e?.response?.data?.message || 'Erreur');
     } finally { setSaving(false); }
   }
 
-  const heroColor = lead ? acolor(lead._id)                          : '#10b981';
-  const statusCfg = lead ? (STATUS_CFG[lead.status] || STATUS_CFG.New)   : null;
-  const sourceCfg = lead ? (SOURCE_CFG[lead.source] || SOURCE_CFG.Other) : null;
-
-  if (loading) return <div className="ld-loading"><Spinner size={36} /><span>Loading lead…</span></div>;
+  // ── Render ────────────────────────────────────────────────────────────────
+  if (loading) return <div className="ldsh-loading"><Spinner size={32}/><span>Chargement…</span></div>;
   if (error)   return (
-    <div className="ld-error">
-      <span className="ld-error__icon">⚠</span><p>{error}</p>
-      <button className="btn-primary" onClick={() => navigate(-1)}>← Go back</button>
+    <div className="ldsh-error">
+      <span>⚠</span><p>{error}</p>
+      <button className="ldsh-btn ldsh-btn--ghost" onClick={() => navigate(-1)}>← Retour</button>
     </div>
   );
   if (!lead) return null;
 
+  const heroColor = acolor(lead._id);
+  const statusCfg = STATUS_CFG[lead.status] || STATUS_CFG.New;
+  const sourceCfg = SOURCE_CFG[lead.source] || SOURCE_CFG.Other;
+  const visibleNotes = notesExpanded ? lead.notes : (lead.notes?.slice(-NOTES_PREVIEW) || []);
+
+  const TABS = [
+    { k: 'overview', label: 'Aperçu',   icon: <FileText size={13}/> },
+    { k: 'notes',    label: `Notes (${lead.notes?.length || 0})`, icon: <MessageSquare size={13}/> },
+    { k: 'edit',     label: 'Modifier', icon: <Edit3 size={13}/> },
+  ];
+
   return (
-    <div className="lw-root">
+    <div className="ldsh-root">
 
-      {/* ══════════ HERO ══════════ */}
-      <div className="lw-hero" style={{ "--hero": heroColor }}>
-        <div className="lw-hero__blob lw-hero__blob--1" style={{ background: heroColor }} />
-        <div className="lw-hero__blob lw-hero__blob--2" style={{ background: heroColor }} />
-        <div className="lw-hero__inner">
-          <button className="lw-hero__back" onClick={() => navigate(-1)}>← My Leads</button>
+      {/* ── Hero ── */}
+      <div className="ldsh-hero" style={{ '--hero': heroColor }}>
+        <div className="ldsh-hero__blob" style={{ background: heroColor }}/>
+        <div className="ldsh-hero__inner">
 
-          <div className="lw-hero__profile">
-            <div className="lw-hero__avatar" style={{ background: heroColor }}>
-              {`${lead.firstName?.[0]||""}${lead.lastName?.[0]||""}`.toUpperCase()}
+          <button className="ldsh-back" onClick={() => navigate(-1)}>
+            <ArrowLeft size={14}/> Mes leads
+          </button>
+
+          <div className="ldsh-profile">
+            <div className="ldsh-avatar" style={{ background: heroColor }}>
+              {`${lead.firstName?.[0]||''}${lead.lastName?.[0]||''}`.toUpperCase()}
             </div>
-            <div className="lw-hero__identity">
-              <div className="lw-hero__id">{lead._id?.slice(-6).toUpperCase() || "—"}</div>
-              <h1 className="lw-hero__name">{lead.firstName} {lead.lastName}</h1>
-              <div className="lw-hero__meta">{lead.email} · {lead.phone}</div>
-              {lead.city && <div className="lw-hero__meta">📍 {lead.city}{lead.country ? `, ${lead.country}` : ""}</div>}
-              <div className="lw-hero__badges">
-                <span className="lw-pill" style={{ color: statusCfg.color, borderColor: statusCfg.color + "55", background: statusCfg.light + "22" }}>
+
+            <div className="ldsh-identity">
+              <div className="ldsh-id">#{String(lead._id).slice(-6).toUpperCase()}</div>
+              <h1 className="ldsh-name">{lead.firstName} {lead.lastName}</h1>
+              <div className="ldsh-meta">{lead.email} · {lead.phone}</div>
+              {lead.city && (
+                <div className="ldsh-meta"><MapPin size={11}/> {lead.city}{lead.country ? `, ${lead.country}` : ''}</div>
+              )}
+              <div className="ldsh-badges">
+                <span className="ldsh-badge"
+                  style={{ background: statusCfg.light + '33', color: statusCfg.color, borderColor: statusCfg.color + '55' }}>
+                  <span className="ldsh-badge__dot" style={{ background: statusCfg.color }}/>
                   {statusCfg.label}
                 </span>
-                <span className="lw-pill lw-pill--notes">
-                  {sourceCfg?.icon} {sourceCfg?.label}
-                </span>  </div>
+                <span className="ldsh-badge ldsh-badge--source">
+                  {sourceCfg.icon} {sourceCfg.label}
+                </span>
+              </div>
             </div>
 
-            {/* Status panel */}
-            <div className="lw-hero__status-panel">
-              <div className="lw-hero__status-label">Current Status</div>
-              <div className="lw-hero__status-badge" style={{ background: statusCfg.light, borderColor: statusCfg.color + "55" }}>
-                <span className="lw-hero__status-dot" style={{ background: statusCfg.color }} />
-                <span style={{ color: statusCfg.color, fontWeight: 800 }}>{statusCfg.label}</span>
-              </div>
-              <div className="lw-hero__status-label" style={{ marginTop: 10 }}>Change to</div>
-              <div className="lw-status-grid">
+            {/* Status changer — salesman only */}
+            <div className="ldsh-status-panel">
+              <div className="ldsh-status-panel__label">Changer le statut</div>
+              <div className="ldsh-status-grid">
                 {Object.entries(STATUS_CFG).map(([k, v]) => {
                   const active = lead.status === k;
                   return (
                     <button key={k}
-                      className={`lw-status-btn${active ? " lw-status-btn--active" : ""}`}
+                      className={`ldsh-status-btn${active ? ' active' : ''}`}
                       style={{
-                        borderColor: active ? v.color : "transparent",
-                        background:  active ? v.light : "rgba(255,255,255,.06)",
-                        color:       active ? v.color : "rgba(240,246,252,.6)",
+                        borderColor: active ? v.color        : 'rgba(255,255,255,.1)',
+                        background:  active ? v.light + '33' : 'rgba(255, 255, 255, 0.63)',
+                        color:       active ? v.color        : 'rgba(8, 8, 8, 0.65)',
                       }}
                       disabled={statusSaving}
                       onClick={() => handleStatusChange(k)}>
-                      <span className="lw-status-btn__dot" style={{ background: v.color }} />
+                      <span className="ldsh-status-btn__dot" style={{ background: v.color }}/>
                       {v.label}
                     </button>
                   );
@@ -216,74 +231,81 @@ const visibleNotes = lead?.notes
             </div>
           </div>
 
-          <div className="lw-tabs">
-            {[
-              { k: "overview", icon: "◈", label: "Overview" },
-              { k: "notes",    icon: "✎", label: `Notes (${lead.notes?.length || 0})` },
-              { k: "edit",     icon: "✦", label: "Edit" },
-
-            ].map((t) => (
-              <button key={t.k} className={`lw-tab${tab === t.k ? " lw-tab--active" : ""}`}
+          <div className="ldsh-tabs">
+            {TABS.map(t => (
+              <button key={t.k}
+                className={`ldsh-tab${tab === t.k ? ' ldsh-tab--active' : ''}`}
                 onClick={() => setTab(t.k)}>
-                <span className="lw-tab__icon">{t.icon}</span>{t.label}
+                {t.icon} {t.label}
               </button>
             ))}
           </div>
         </div>
       </div>
 
-      {/* ══════════ CONTENT ══════════ */}
-      <div className="lw-content">
+      {/* ── Content ── */}
+      <div className="ldsh-content">
 
-        {tab === "overview" && (
-          <div className="lw-bento">
-            <div className="lw-card lw-card--wide">
-              <div className="lw-card__label">📋 Contact details</div>
-              <div className="lw-contacts-grid">
+        {/* ══ APERÇU ══ */}
+        {tab === 'overview' && (
+          <div className="ldsh-bento">
+
+            {/* Infos contact */}
+            <div className="ldsh-card ldsh-card--wide">
+              <div className="ldsh-card__label">📋 Informations de contact</div>
+              <div className="ldsh-info-grid">
                 {[
-                  { icon: "✉",  label: "Email",   value: lead.email },
-                  { icon: "📞", label: "Phone",   value: lead.phone   || "—" },
-                  { icon: "🏙", label: "City",    value: lead.city    || "—" },
-                  { icon: "🌍", label: "Country", value: lead.country || "—" },
-                  { icon: "📅", label: "Created", value: fmtDate(lead.createdAt) },
-                  { icon: "🔄", label: "Updated", value: fmtDate(lead.updatedAt) },
-                ].map((row) => (
-                  <div key={row.label} className="lw-contact-item">
-                    <span className="lw-contact-item__icon">{row.icon}</span>
+                  { icon: '✉',  label: 'Email',        value: lead.email      || '—' },
+                  { icon: '📞', label: 'Téléphone',    value: lead.phone      || '—' },
+                  { icon: '🏙', label: 'Ville',        value: lead.city       || '—' },
+                  { icon: '🌍', label: 'Pays',         value: lead.country    || '—' },
+                  { icon: '🔖', label: 'Source',       value: `${sourceCfg.icon} ${sourceCfg.label}` },
+                  { icon: '📅', label: 'Créé le',      value: fmtDate(lead.createdAt) },
+                  { icon: '🔄', label: 'Mis à jour',   value: fmtDate(lead.updatedAt) },
+                  { icon: '📞', label: 'Nb appels',    value: `${lead.callsCount || 0} appel(s)` },
+                ].map(row => (
+                  <div key={row.label} className="ldsh-info-row">
+                    <span className="ldsh-info-icon">{row.icon}</span>
                     <div>
-                      <div className="lw-contact-item__label">{row.label}</div>
-                      <div className="lw-contact-item__value">{row.value}</div>
+                      <div className="ldsh-info-label">{row.label}</div>
+                      <div className="ldsh-info-value">{row.value}</div>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="lw-card lw-card--accent">
-              <div className="lw-card__label">✎ Quick note</div>
-              <textarea className="lw-quick-textarea" placeholder="Type a quick note…"
-                value={noteText} rows={3} disabled={noteSaving}
-                onChange={(e) => { setNoteText(e.target.value); setNoteError(""); }} />
-              {noteError && <p className="lw-note-error">{noteError}</p>}
-              <button className="lw-btn-add-note" onClick={handleAddNote}
-                disabled={noteSaving || !noteText.trim()} style={{ opacity: noteSaving ? .65 : 1 }}>
-                {noteSaving ? "Saving…" : "✎ Save note"}
+            {/* Note rapide */}
+            <div className="ldsh-card ldsh-card--accent">
+              <div className="ldsh-card__label">✎ Note rapide</div>
+              <textarea className="ldsh-quick-textarea"
+                placeholder="Tapez une note rapide…"
+                value={noteText} rows={4} disabled={noteSaving}
+                onChange={e => { setNoteText(e.target.value); setNoteError(''); }}
+              />
+              {noteError && <p className="ldsh-note-error">{noteError}</p>}
+              <button className="ldsh-btn ldsh-btn--primary"
+                onClick={handleAddNote} disabled={noteSaving || !noteText.trim()}>
+                {noteSaving ? 'Sauvegarde…' : '✎ Sauvegarder la note'}
               </button>
             </div>
 
+            {/* Dernière note */}
             {lead.notes?.length > 0 && (
-              <div className="lw-card">
-                <div className="lw-card__label">📌 Last note</div>
-                <p className="lw-note-preview-text">
+              <div className="ldsh-card">
+                <div className="ldsh-card__label">📌 Dernière note</div>
+                <p className="ldsh-last-note">
                   {lead.notes[lead.notes.length - 1].content?.slice(0, 160)}
-                  {lead.notes[lead.notes.length - 1].content?.length > 160 && "…"}
+                  {lead.notes[lead.notes.length - 1].content?.length > 160 ? '…' : ''}
                 </p>
-                <div className="lw-note-preview-footer">
-                  <span className="lw-note-preview-date">
-                    {fmtDate(lead.notes[lead.notes.length - 1].createdAt)} · {fmtTime(lead.notes[lead.notes.length - 1].createdAt)}
+                <div className="ldsh-last-note-footer">
+                  <span className="ldsh-last-note-date">
+                    <Clock size={11}/>
+                    {fmtDate(lead.notes[lead.notes.length - 1].createdAt)} ·{' '}
+                    {fmtTime(lead.notes[lead.notes.length - 1].createdAt)}
                   </span>
-                  <button className="lw-link-btn" onClick={() => setTab("notes")}>
-                    See all {lead.notes.length} →
+                  <button className="ldsh-link-btn" onClick={() => setTab('notes')}>
+                    Voir toutes ({lead.notes.length}) →
                   </button>
                 </div>
               </div>
@@ -291,184 +313,133 @@ const visibleNotes = lead?.notes
           </div>
         )}
 
-        {tab === "notes" && (
-          <div className="lw-notes">
-            <div className="lw-notes__header">
-              <div className="lw-notes__title-block">
-                <p className="lw-notes__eyebrow">Lead activity</p>
-                <h2 className="lw-notes__title">Notes</h2>
-                <p className="lw-notes__sub">
-                  {lead.notes?.length
-                    ? `${lead.notes.length} note${lead.notes.length > 1 ? 's' : ''} on this lead`
-                    : "No notes yet"}
-                </p>
-              </div>
+        {/* ══ NOTES ══ */}
+        {tab === 'notes' && (
+          <div className="ldsh-notes-tab">
+            <div className="ldsh-section-header">
+              <h2>💬 Notes</h2>
+              <p>{lead.notes?.length ? `${lead.notes.length} note(s) sur ce lead` : 'Aucune note.'}</p>
             </div>
 
-            {/* ── Add note form ── */}
-            <div className="lw-note-form">
-              <div className="lw-note-form__label">💬 Add a note</div>
-              <textarea ref={noteRef} className="lw-note-textarea"
-                placeholder="Write your observations, follow-up details, or any relevant info…"
-                value={noteText} rows={4} disabled={noteSaving}
-                onChange={(e) => { setNoteText(e.target.value); setNoteError(""); }} />
-              {noteError && <p className="lw-note-error">⚠ {noteError}</p>}
-              <div className="lw-note-form__footer">
-                <span className="lw-note-form__chars">{noteText.length} chars</span>
-                <button className="lw-btn-add-note" onClick={handleAddNote}
-                  disabled={noteSaving || !noteText.trim()}>
-                  {noteSaving ? "Saving…" : "✎ Save note"}
+            <div className="ldsh-card ldsh-note-form-card">
+              <div className="ldsh-card__label">Ajouter une note</div>
+              <textarea ref={noteRef} className="ldsh-note-textarea" rows={4}
+                placeholder="Observations, suivi, détails importants…"
+                value={noteText} disabled={noteSaving}
+                onChange={e => { setNoteText(e.target.value); setNoteError(''); }}
+              />
+              {noteError && <p className="ldsh-note-error">⚠ {noteError}</p>}
+              <div className="ldsh-note-form-footer">
+                <span className="ldsh-chars">{noteText.length} / 2000</span>
+                <button className="ldsh-btn ldsh-btn--primary"
+                  onClick={handleAddNote} disabled={noteSaving || !noteText.trim()}>
+                  {noteSaving ? 'Sauvegarde…' : '✎ Sauvegarder'}
                 </button>
               </div>
             </div>
 
-            {(!lead.notes || lead.notes.length === 0) && (
-              <div className="lw-notes__empty">
-                <div className="lw-notes__empty-icon">📝</div>
-                <p className="lw-notes__empty-title">No notes yet</p>
-                <p className="lw-notes__empty-sub">Write your first note using the form above.</p>
+            {lead.notes?.length > 0 ? (
+              <>
+                <div className="ldsh-timeline">
+                  {visibleNotes.map((note, i) => {
+                    const isExp  = expandedNote === i;
+                    const isLong = note.content?.length > NOTE_TRUNCATE;
+                    const num    = lead.notes.length - (visibleNotes.length - 1 - i);
+                    return (
+                      <div key={i} className="ldsh-note-entry" style={{ animationDelay: `${i * 50}ms` }}>
+                        <div className="ldsh-note-entry__dot"/>
+                        <div className="ldsh-note-entry__card">
+                          <div className="ldsh-note-entry__header">
+                            <span className="ldsh-note-entry__num">Note #{num}</span>
+                            <span className="ldsh-note-entry__date">
+                              <Clock size={10}/>
+                              {fmtDate(note.createdAt)} · {fmtTime(note.createdAt)}
+                            </span>
+                          </div>
+                          <p className="ldsh-note-entry__body">
+                            {isExp || !isLong ? note.content : note.content?.slice(0, NOTE_TRUNCATE) + '…'}
+                          </p>
+                          {isLong && (
+                            <button className="ldsh-note-entry__expand"
+                              onClick={() => setExpandedNote(isExp ? null : i)}>
+                              {isExp ? '↑ Réduire' : '↓ Lire plus'}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                {lead.notes.length > NOTES_PREVIEW && (
+                  <button className="ldsh-btn ldsh-btn--ghost ldsh-btn--full"
+                    onClick={() => { setNotesExpanded(v => !v); setExpandedNote(null); }}>
+                    {notesExpanded
+                      ? <><ChevronUp size={14}/> Réduire</>
+                      : <><ChevronDown size={14}/> Voir toutes les {lead.notes.length} notes</>}
+                  </button>
+                )}
+              </>
+            ) : (
+              <div className="ldsh-empty">
+                <div className="ldsh-empty__icon">📝</div>
+                <p className="ldsh-empty__title">Aucune note</p>
+                <p className="ldsh-empty__sub">Utilisez le formulaire ci-dessus pour ajouter la première note.</p>
               </div>
             )}
-
-             {lead.notes?.length > 0 && (
-                          <>
-                            <div className="ld-timeline">
-                             {visibleNotes.map((note, i) => {
-                                const isExp  = expandedNote === i;
-                                const isLong = note.content?.length > NOTE_TRUNCATE;
-                                const noteNum = lead.notes.length - (visibleNotes.length - 1 - i);
-                                return (
-                                  <div key={i} className="ld-note-entry" style={{ animationDelay: `${i * 60}ms` }}>
-                                    <span className="ld-note-entry__dot" />
-                                    <div className="ld-note-entry__card">
-                                      <div className="ld-note-entry__header">
-                                        <span className="ld-note-entry__num">Note #{noteNum}</span>
-                                        <span className="ld-note-entry__date">
-                                          <span className="ld-note-entry__date-icon">📅</span>
-                                          {fmtDate(note.createdAt)} · {fmtTime(note.createdAt)}
-                                        </span>
-                                      </div>
-                                      <p className="ld-note-entry__body">
-                                        {isExp || !isLong
-                                          ? note.content
-                                          : note.content?.slice(0, NOTE_TRUNCATE) + "…"}
-                                      </p>
-                                      {isLong && (
-                                        <button className="ld-note-entry__expand"
-                                          onClick={() => setExpandedNote(isExp ? null : i)}>
-                                          {isExp ? "↑ Show less" : "↓ Read more"}
-                                        </button>
-                                      )}
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                            </div>
-            
-                            {lead.notes.length > NOTES_PREVIEW && (
-                              <button className="ld-notes__toggle"
-                                onClick={() => { setNotesExpanded(!notesExpanded); setExpandedNote(null); }}>
-                                {notesExpanded
-                                  ? `↑ Show less (${NOTES_PREVIEW} most recent)`
-                                  : `↓ Show all ${lead.notes.length} notes`}
-                              </button>
-                            )}
-                          </>
-                        )}
-                      </div>
-                    )}
-{/* ── Edit tab ── */}
-        {tab === "edit" && (
-          <div className="ld-edit">
-            <div className="ld-edit__header">
-              <h2 className="ld-edit__title">Edit Lead</h2>
-              <p className="ld-edit__sub">Update contact information for this lead.</p>
-            </div>
-
-            {saveError && <div className="ld-edit__error">⚠ {saveError}</div>}
-
-            <div className="ld-edit__grid">
-              {[
-                { f: "firstName", l: "First name *", p: "First name" },
-                { f: "lastName",  l: "Last name *",  p: "Last name"  },
-                { f: "email",     l: "Email *",      p: "email@example.com", t: "email" },
-                { f: "phone",     l: "Phone",        p: "+216 xx xxx xxx" },
-                { f: "city",      l: "City",         p: "City"    },
-                { f: "country",   l: "Country",      p: "Country" },
-              ].map(({ f, l, p, t }) => (
-                <div key={f} className="ld-field">
-                  <label className="ld-field__label">{l}</label>
-                  <input
-                    className="ld-field__input"
-                    type={t || "text"}
-                    value={editData[f]}
-                    placeholder={p}
-                    disabled={saving}
-                    onChange={(e) => setEditData({ ...editData, [f]: e.target.value })}
-                  />
-                </div>
-              ))}
-
-              <div className="ld-field ld-field--full">
-                <label className="ld-field__label">Source</label>
-                <select
-                  className="ld-field__input"
-                  value={editData.source}
-                  disabled={saving}
-                  onChange={(e) => setEditData({ ...editData, source: e.target.value })}
-                >
-                  {Object.entries(SOURCE_CFG).map(([k, v]) => (
-                    <option key={k} value={k}>{v.icon} {v.label}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div className="ld-edit__actions">
-              <button
-                className="ld-btn-cancel"
-                onClick={() => { setTab("overview"); setSaveError(""); }}
-                disabled={saving}
-              >
-                Cancel
-              </button>
-              <button
-                className="ld-btn-save"
-                onClick={handleSaveEdit}
-                disabled={saving || !editData?.firstName || !editData?.lastName || !editData?.email}
-              >
-                {saving ? "Saving…" : "✓ Save changes"}
-              </button>
-            </div>
           </div>
         )}
-        {tab === "history" && (
-          <div className="lw-history">
-            <div className="lw-history__header">
-              <div>
-                <h2 className="lw-history__title">History</h2>
-                <p className="lw-history__sub">View the history of this lead.</p>
-              </div>
-            </div>
 
-            <div className="lw-history__list">
-              {lead.history?.map((h, i) => (
-                <div key={i} className="lw-history-item" style={{ animationDelay: `${i * 40}ms` }}>
-                  <div className="lw-history-item__header">
-                    <span className="lw-history-item__dot" />
-                    <span className="lw-history-item__time">{fmtDate(h.createdAt)} · {fmtTime(h.createdAt)}</span>
+        {/* ══ MODIFIER ══ */}
+        {tab === 'edit' && (
+          <div className="ldsh-edit-tab">
+            <div className="ldsh-section-header">
+              <h2>✏️ Modifier le Lead</h2>
+              <p>Mettez à jour les informations de contact.</p>
+            </div>
+            {saveError && <div className="ldsh-error-msg">⚠ {saveError}</div>}
+            {saveOk    && <div className="ldsh-success-msg">{saveOk}</div>}
+            <div className="ldsh-card">
+              <div className="ldsh-edit-grid">
+                {EDITABLE_FIELDS.map(({ f, l, p, t }) => (
+                  <div key={f} className="ldsh-field">
+                    <label className="ldsh-field__label">{l}</label>
+                    <input type={t} className="ldsh-field__input"
+                      value={editData?.[f] || ''} placeholder={p} disabled={saving}
+                      onChange={e => setEditData({ ...editData, [f]: e.target.value })}
+                    />
                   </div>
-                  <p className="lw-history-item__body">{h.content}</p>
+                ))}
+                <div className="ldsh-field ldsh-field--full">
+                  <label className="ldsh-field__label">Source</label>
+                  <select className="ldsh-field__input" value={editData?.source || 'Other'}
+                    disabled={saving}
+                    onChange={e => setEditData({ ...editData, source: e.target.value })}>
+                    {Object.entries(SOURCE_CFG).map(([k, v]) => (
+                      <option key={k} value={k}>{v.icon} {v.label}</option>
+                    ))}
+                  </select>
                 </div>
-              ))}
+              </div>
+              <div className="ldsh-edit-actions">
+                <button className="ldsh-btn ldsh-btn--ghost"
+                  onClick={() => { setTab('overview'); setSaveError(''); }}
+                  disabled={saving}>
+                  <X size={14}/> Annuler
+                </button>
+                <button className="ldsh-btn ldsh-btn--primary"
+                  onClick={handleSaveEdit} disabled={saving}>
+                  {saving ? <><Spinner size={13}/> Sauvegarde…</> : <><Save size={14}/> Sauvegarder</>}
+                </button>
+              </div>
             </div>
           </div>
         )}
       </div>
 
+      {/* Toast */}
       {toast && (
-        <div className={`lw-toast lw-toast--${toast.type}`}>
-          {toast.type === "success" ? "✓" : "⚠"} {toast.msg}
+        <div className={`ldsh-toast ldsh-toast--${toast.type}`}>
+          {toast.type === 'success' ? <CheckCircle2 size={14}/> : '⚠'} {toast.msg}
         </div>
       )}
     </div>
